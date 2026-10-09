@@ -351,31 +351,25 @@ document.querySelectorAll('#dollarPeriods .period-btn').forEach(btn => {
 });
 
 // ============================================
-// Крипта — CoinPaprika API
+// Крипта — CoinGecko с паузой 3 сек
 // ============================================
 let cryptoChartInstance = null;
 
 async function loadCryptoHistory(coinId, days) {
-  // CoinPaprika использует ID вида btc-bitcoin, eth-ethereum, ton-toncoin
-  const coinMap = {
-    'bitcoin': 'btc-bitcoin',
-    'the-open-network': 'ton-toncoin',
-    'ethereum': 'eth-ethereum',
-  };
-  const paprikaId = coinMap[coinId] || coinId;
+  const allowed = [1, 7, 14, 30, 90, 180, 365];
+  let daysParam = 365;
+  for (const d of allowed) {
+    if (days <= d) { daysParam = d; break; }
+  }
 
-  const start = new Date();
-  start.setDate(start.getDate() - days);
-  const startStr = start.toISOString().slice(0, 10);
-
-  const url = `https://api.coinpaprika.com/v1/tickers/${paprikaId}/historical?start=${startStr}&interval=1d`;
+  const url = `https://api.coingecko.com/api/v3/coins/${coinId}/ohlc?vs_currency=usd&days=${daysParam}`;
   const data = await fetchJSONViaProxy(url);
 
-  if (!Array.isArray(data)) throw new Error('Неверный формат CoinPaprika');
+  if (!Array.isArray(data)) throw new Error('Неверный формат CoinGecko');
 
-  // Формат: [{ timestamp: "2024-01-01T00:00:00Z", price: 42000, ... }]
-  const labels = data.map(row => row.timestamp.slice(0, 10));
-  const values = data.map(row => row.price);
+  // Формат: [timestamp, open, high, low, close]
+  const labels = data.map(row => new Date(row[0]).toISOString().slice(0, 10));
+  const values = data.map(row => row[4]);
 
   return { labels, values };
 }
@@ -388,11 +382,11 @@ async function renderCryptoChart(days) {
   try {
     statusEl.textContent = 'Загрузка BTC...';
     const btc = await loadCryptoHistory('bitcoin', days);
-    await new Promise(r => setTimeout(r, 500));
+    await new Promise(r => setTimeout(r, 3000));
 
     statusEl.textContent = 'Загрузка TON...';
     const ton = await loadCryptoHistory('the-open-network', days);
-    await new Promise(r => setTimeout(r, 500));
+    await new Promise(r => setTimeout(r, 3000));
 
     statusEl.textContent = 'Загрузка ETH...';
     const eth = await loadCryptoHistory('ethereum', days);
