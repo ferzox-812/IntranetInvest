@@ -46,6 +46,10 @@ function switchTab(name) {
     window.__stocksLoaded = true;
     renderStocksList();
   }
+  if (name === 'bonds' && !window.__bondsLoaded) {
+    window.__bondsLoaded = true;
+    renderBondsList();
+  }
 }
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -96,7 +100,7 @@ async function renderStocksList() {
         ? `${s.change > 0 ? '+' : ''}${s.change.toFixed(2)}%`
         : '—';
       return `
-        <div class="stock-row" data-ticker="${s.ticker}" data-name="${s.name || ''}">
+        <div class="stock-row" data-ticker="${s.ticker}" data-name="${s.name || ''}" data-type="stock">
           <div>
             <div class="stock-ticker">${s.ticker}</div>
             <div class="stock-name">${s.name || ''}</div>
@@ -107,10 +111,9 @@ async function renderStocksList() {
       `;
     }).join('');
 
-    // Клик по строке — открываем экран акции
     listEl.querySelectorAll('.stock-row').forEach(row => {
       row.addEventListener('click', () => {
-        openStockView(row.dataset.ticker, row.dataset.name);
+        openStockView(row.dataset.ticker, row.dataset.name, 'stock');
       });
     });
 
@@ -121,28 +124,105 @@ async function renderStocksList() {
 }
 
 // ============================================
-// Экран конкретной акции
+// Вкладка «Облигации» — топ-30
+// ============================================
+async function renderBondsList() {
+  const listEl = document.getElementById('bondsList');
+  try {
+    const url = 'https://iss.moex.com/iss/engines/stock/markets/bonds/boards/TQOB/securities.json?iss.meta=off&iss.only=securities,marketdata';
+    const data = await fetchViaProxy(url);
+
+    const secCols = data.securities.columns;
+    const secRows = data.securities.data;
+    const mdCols = data.marketdata.columns;
+    const mdRows = data.marketdata.data;
+
+    const iSecId = secCols.indexOf('SECID');
+    const iShortName = secCols.indexOf('SHORTNAME');
+    const iCoupon = secCols.indexOf('COUPONPERCENT');
+
+    const iLast = mdCols.indexOf('LAST');
+    const iPrev = mdCols.indexOf('PREVPRICE');
+    const iValToday = mdCols.indexOf('VALTODAY');
+    const iYield = mdCols.indexOf('YIELDATPREVWAPRICE');
+
+    const bonds = secRows.map((row, i) => {
+      const md = mdRows[i] || [];
+      const last = md[iLast];
+      const prev = md[iPrev];
+      const turnover = md[iValToday] || 0;
+      const coupon = row[iCoupon];
+      const yieldVal = md[iYield];
+      const change = (last && prev) ? ((last - prev) / prev * 100) : null;
+      return {
+        ticker: row[iSecId],
+        name: row[iShortName],
+        last,
+        prev,
+        coupon,
+        yieldVal,
+        turnover,
+        change,
+      };
+    })
+    .filter(b => b.last != null && b.turnover > 0)
+    .sort((a, b) => b.turnover - a.turnover)
+    .slice(0, 30);
+
+    listEl.innerHTML = bonds.map(b => {
+      const couponText = b.coupon != null ? b.coupon.toFixed(2) : '—';
+      const priceText = b.last != null ? b.last.toFixed(2) : '—';
+      const yieldText = b.yieldVal != null ? b.yieldVal.toFixed(2) : '—';
+      return `
+        <div class="bond-row" data-ticker="${b.ticker}" data-name="${b.name || ''}" data-type="bond">
+          <div>
+            <div class="stock-ticker">${b.ticker}</div>
+            <div class="stock-name">${b.name || ''}</div>
+          </div>
+          <div class="bond-cell bond-coupon">${couponText}%</div>
+          <div class="bond-cell">${priceText}</div>
+          <div class="bond-cell">${yieldText}%</div>
+        </div>
+      `;
+    }).join('');
+
+    listEl.querySelectorAll('.bond-row').forEach(row => {
+      row.addEventListener('click', () => {
+        openStockView(row.dataset.ticker, row.dataset.name, 'bond');
+      });
+    });
+
+  } catch (e) {
+    console.error(e);
+    listEl.innerHTML = `<p class="status">Ошибка загрузки: ${e.message}</p>`;
+  }
+}
+
+// ============================================
+// Экран конкретной бумаги
 // ============================================
 let stockChartInstance = null;
-let currentStockTicker = null;
+let currentTicker = null;
+let currentType = null;
 
-function openStockView(ticker, name) {
-  currentStockTicker = ticker;
+function openStockView(ticker, name, type) {
+  currentTicker = ticker;
+  currentType = type;
 
   document.getElementById('stockTitle').textContent = ticker;
   document.getElementById('stockSubtitle').textContent = name || '';
 
-  // Сброс активной кнопки периода на 1Г
   document.querySelectorAll('#stockPeriods .period-btn').forEach(b => b.classList.remove('active'));
   document.querySelector('#stockPeriods .period-btn[data-days="365"]')?.classList.add('active');
 
   document.getElementById('stockView').classList.remove('hidden');
-  renderChart('stock', ticker, 365);
+  renderChart(type === 'bond' ? 'bond' : 'stock', ticker, 365);
 }
 
 function closeStockView() {
   document.getElementById('stockView').classList.add('hidden');
-  currentStockTicker = null;
+  currentTicker = null;
+  currentType = null;
   if (stockChartInstance) {
     stockChartInstance.destroy();
     stockChartInstance = null;
@@ -151,18 +231,16 @@ function closeStockView() {
 
 document.getElementById('stockBack').addEventListener('click', closeStockView);
 
-// Кнопки периодов на экране акции
 document.querySelectorAll('#stockPeriods .period-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#stockPeriods .period-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    if (currentStockTicker) {
-      renderChart('stock', currentStockTicker, parseInt(btn.dataset.days, 10));
+    if (currentTicker) {
+      renderChart(currentType === 'bond' ? 'bond' : 'stock', currentTicker, parseInt(btn.dataset.days, 10));
     }
   });
 });
 
-// Кнопки периодов на вкладке «Индекс»
 document.querySelectorAll('#indexPeriods .period-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#indexPeriods .period-btn').forEach(b => b.classList.remove('active'));
@@ -173,17 +251,21 @@ document.querySelectorAll('#indexPeriods .period-btn').forEach(btn => {
 
 // ============================================
 // Универсальная загрузка истории с MOEX
-// target: 'index' | 'stock'
+// target: 'index' | 'stock' | 'bond'
 // ============================================
 async function loadHistory(target, secid, days) {
   const from = new Date();
   from.setDate(from.getDate() - days);
   const fromStr = from.toISOString().slice(0, 10);
 
-  // Для индекса — отдельный эндпоинт, для акции — общий по бумагам
-  const baseUrl = target === 'index'
-    ? `https://iss.moex.com/iss/history/engines/stock/markets/index/securities/${secid}.json`
-    : `https://iss.moex.com/iss/history/engines/stock/markets/shares/boards/TQBR/securities/${secid}.json`;
+  let baseUrl;
+  if (target === 'index') {
+    baseUrl = `https://iss.moex.com/iss/history/engines/stock/markets/index/securities/${secid}.json`;
+  } else if (target === 'bond') {
+    baseUrl = `https://iss.moex.com/iss/history/engines/stock/markets/bonds/boards/TQOB/securities/${secid}.json`;
+  } else {
+    baseUrl = `https://iss.moex.com/iss/history/engines/stock/markets/shares/boards/TQBR/securities/${secid}.json`;
+  }
 
   let allRows = [];
   let columns = null;
@@ -228,7 +310,7 @@ async function loadHistory(target, secid, days) {
 
 // ============================================
 // Универсальная отрисовка графика
-// target: 'index' | 'stock'
+// target: 'index' | 'stock' | 'bond'
 // ============================================
 async function renderChart(target, secid, days) {
   const statusEl = document.getElementById(target === 'index' ? 'chartStatus' : 'stockChartStatus');
@@ -245,7 +327,7 @@ async function renderChart(target, secid, days) {
     if (target === 'index' && window.__imoexChartInstance) {
       window.__imoexChartInstance.destroy();
     }
-    if (target === 'stock' && stockChartInstance) {
+    if (target !== 'index' && stockChartInstance) {
       stockChartInstance.destroy();
     }
 
@@ -285,7 +367,7 @@ async function renderChart(target, secid, days) {
     });
 
     if (target === 'index') window.__imoexChartInstance = chart;
-    if (target === 'stock') stockChartInstance = chart;
+    if (target !== 'index') stockChartInstance = chart;
 
     const last = values[values.length - 1];
     const first = values[0];
