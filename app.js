@@ -25,6 +25,27 @@ async function fetchJSONViaProxy(targetUrl) {
 }
 
 // ============================================
+// Цвет тренда: зелёный при росте, красный при падении
+// ============================================
+function getTrendColor(values) {
+  // Отфильтровываем null (бывают в данных MOEX)
+  const clean = values.filter(v => v != null);
+  if (clean.length < 2) {
+    return {
+      border: '#888888',
+      background: 'rgba(136, 136, 136, 0.15)',
+    };
+  }
+  const first = clean[0];
+  const last = clean[clean.length - 1];
+  const isGrowing = last >= first;
+
+  return isGrowing
+    ? { border: '#26a269', background: 'rgba(38, 162, 105, 0.15)' }  // зелёный
+    : { border: '#e01b24', background: 'rgba(224, 27, 36, 0.15)' };   // красный
+}
+
+// ============================================
 // Навигация
 // ============================================
 const SUBTITLES = {
@@ -237,6 +258,9 @@ async function renderChart(target, secid, days) {
     if (target === 'index' && window.__imoexChartInstance) window.__imoexChartInstance.destroy();
     if (target !== 'index' && stockChartInstance) stockChartInstance.destroy();
 
+    // Цвет по тренду
+    const color = getTrendColor(values);
+
     const chart = new Chart(ctx, {
       type: 'line',
       data: {
@@ -244,8 +268,8 @@ async function renderChart(target, secid, days) {
         datasets: [{
           label: secid,
           data: values,
-          borderColor: '#2481cc',
-          backgroundColor: 'rgba(36, 129, 204, 0.15)',
+          borderColor: color.border,
+          backgroundColor: color.background,
           fill: true, tension: 0.25, pointRadius: 0, borderWidth: 2,
         }]
       },
@@ -310,6 +334,8 @@ async function renderDollarChart(days) {
     const ctx = canvasEl.getContext('2d');
     if (dollarChartInstance) dollarChartInstance.destroy();
 
+    const color = getTrendColor(values);
+
     dollarChartInstance = new Chart(ctx, {
       type: 'line',
       data: {
@@ -317,8 +343,8 @@ async function renderDollarChart(days) {
         datasets: [{
           label: 'USD/RUB',
           data: values,
-          borderColor: '#26a269',
-          backgroundColor: 'rgba(38, 162, 105, 0.15)',
+          borderColor: color.border,
+          backgroundColor: color.background,
           fill: true, tension: 0.25, pointRadius: 0, borderWidth: 2,
         }]
       },
@@ -382,12 +408,14 @@ async function loadCryptoHistory(symbol, days) {
   return { labels, values };
 }
 
-// Универсальная отрисовка одного графика крипты
-function drawCryptoChart(canvasId, statusId, data, color, label, currentInstance) {
+// Универсальная отрисовка одного графика крипты (с цветом по тренду)
+function drawCryptoChart(canvasId, statusId, data, label, currentInstance) {
   const statusEl = document.getElementById(statusId);
   const canvasEl = document.getElementById(canvasId);
 
   if (currentInstance) currentInstance.destroy();
+
+  const color = getTrendColor(data.values);
 
   const ctx = canvasEl.getContext('2d');
   const chart = new Chart(ctx, {
@@ -397,8 +425,8 @@ function drawCryptoChart(canvasId, statusId, data, color, label, currentInstance
       datasets: [{
         label: label,
         data: data.values,
-        borderColor: color,
-        backgroundColor: color.replace('rgb', 'rgba').replace(')', ', 0.15)'),
+        borderColor: color.border,
+        backgroundColor: color.background,
         fill: true,
         tension: 0.25,
         pointRadius: 0,
@@ -440,23 +468,23 @@ async function renderCryptoChart(days) {
   ethStatus.textContent = 'Ожидание...';
 
   try {
-    // BTC — жёлтый
+    // BTC
     const btc = await loadCryptoHistory('bitcoin', days);
-    btcChartInstance = drawCryptoChart('btcChart', 'btcStatus', btc, 'rgb(242, 169, 0)', 'BTC', btcChartInstance);
+    btcChartInstance = drawCryptoChart('btcChart', 'btcStatus', btc, 'BTC', btcChartInstance);
 
     await new Promise(r => setTimeout(r, 3000));
 
-    // TON — синий
+    // TON
     tonStatus.textContent = 'Загрузка...';
     const ton = await loadCryptoHistory('the-open-network', days);
-    tonChartInstance = drawCryptoChart('tonChart', 'tonStatus', ton, 'rgb(36, 129, 204)', 'TON', tonChartInstance);
+    tonChartInstance = drawCryptoChart('tonChart', 'tonStatus', ton, 'TON', tonChartInstance);
 
     await new Promise(r => setTimeout(r, 3000));
 
-    // ETH — фиолетовый
+    // ETH
     ethStatus.textContent = 'Загрузка...';
     const eth = await loadCryptoHistory('ethereum', days);
-    ethChartInstance = drawCryptoChart('ethChart', 'ethStatus', eth, 'rgb(139, 92, 246)', 'ETH', ethChartInstance);
+    ethChartInstance = drawCryptoChart('ethChart', 'ethStatus', eth, 'ETH', ethChartInstance);
 
   } catch (e) {
     console.error('Ошибка крипты:', e);
