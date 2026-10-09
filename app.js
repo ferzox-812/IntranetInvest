@@ -28,27 +28,25 @@ async function fetchJSONViaProxy(targetUrl) {
 // Цвет тренда: зелёный при росте, красный при падении
 // ============================================
 function getTrendColor(values) {
-  // Отфильтровываем null (бывают в данных MOEX)
   const clean = values.filter(v => v != null);
   if (clean.length < 2) {
-    return {
-      border: '#888888',
-      background: 'rgba(136, 136, 136, 0.15)',
-    };
+    return { border: '#888888', background: 'rgba(136, 136, 136, 0.15)' };
   }
   const first = clean[0];
   const last = clean[clean.length - 1];
   const isGrowing = last >= first;
 
   return isGrowing
-    ? { border: '#26a269', background: 'rgba(38, 162, 105, 0.15)' }  // зелёный
-    : { border: '#e01b24', background: 'rgba(224, 27, 36, 0.15)' };   // красный
+    ? { border: '#26a269', background: 'rgba(38, 162, 105, 0.15)' }
+    : { border: '#e01b24', background: 'rgba(224, 27, 36, 0.15)' };
 }
 
 // ============================================
 // Навигация
 // ============================================
 const SUBTITLES = {
+  home: 'Главная',
+  markets: 'Акции и облигации',
   stocks: 'Акции',
   bonds: 'Облигации',
   index: 'Индекс Мосбиржи',
@@ -56,22 +54,28 @@ const SUBTITLES = {
   crypto: 'Криптовалюты',
 };
 
+const LOADED = {};
+
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(el => el.classList.add('hidden'));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
   document.querySelector(`.tab[data-tab="${name}"]`)?.classList.remove('hidden');
-  document.querySelector(`.tab-btn[data-target="${name}"]`)?.classList.add('active');
   document.getElementById('pageSubtitle').textContent = SUBTITLES[name] || '';
 
-  if (name === 'index' && !window.__imoexLoaded) { window.__imoexLoaded = true; renderChart('index', 'IMOEX', 365); }
-  if (name === 'stocks' && !window.__stocksLoaded) { window.__stocksLoaded = true; renderStocksList(); }
-  if (name === 'bonds' && !window.__bondsLoaded) { window.__bondsLoaded = true; renderBondsList(); }
-  if (name === 'dollar' && !window.__dollarLoaded) { window.__dollarLoaded = true; renderDollarChart(365); }
-  if (name === 'crypto' && !window.__cryptoLoaded) { window.__cryptoLoaded = true; renderCryptoChart(365); }
+  if (name === 'index' && !LOADED.index) { LOADED.index = true; renderChart('index', 'IMOEX', 365); }
+  if (name === 'stocks' && !LOADED.stocks) { LOADED.stocks = true; renderStocksList(); }
+  if (name === 'bonds' && !LOADED.bonds) { LOADED.bonds = true; renderBondsList(); }
+  if (name === 'dollar' && !LOADED.dollar) { LOADED.dollar = true; renderDollarChart(365); }
+  if (name === 'crypto' && !LOADED.crypto) { LOADED.crypto = true; renderCryptoChart(365); }
 }
 
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => switchTab(btn.dataset.target));
+// Клик по плиткам
+document.querySelectorAll('.home-tile').forEach(tile => {
+  tile.addEventListener('click', () => switchTab(tile.dataset.target));
+});
+
+// Клик по "Назад"
+document.querySelectorAll('.back-btn[data-back]').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.back));
 });
 
 // ============================================
@@ -258,7 +262,6 @@ async function renderChart(target, secid, days) {
     if (target === 'index' && window.__imoexChartInstance) window.__imoexChartInstance.destroy();
     if (target !== 'index' && stockChartInstance) stockChartInstance.destroy();
 
-    // Цвет по тренду
     const color = getTrendColor(values);
 
     const chart = new Chart(ctx, {
@@ -354,157 +357,4 @@ async function renderDollarChart(days) {
         scales: {
           x: { display: false },
           y: {
-            grid: { color: 'rgba(128,128,128,0.15)' },
-            ticks: { color: tg.themeParams?.hint_color || '#888', font: { size: 10 } }
-          }
-        }
-      }
-    });
-
-    statusEl.textContent = `Курс USD/RUB: ${values[values.length - 1].toFixed(4)} ₽`;
-  } catch (e) {
-    console.error(e);
-    statusEl.textContent = 'Ошибка: ' + e.message;
-  }
-}
-
-document.querySelectorAll('#dollarPeriods .period-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#dollarPeriods .period-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    renderDollarChart(parseInt(btn.dataset.days, 10));
-  });
-});
-
-// ============================================
-// Крипта — Kraken API (3 отдельных графика)
-// ============================================
-let btcChartInstance = null;
-let tonChartInstance = null;
-let ethChartInstance = null;
-
-async function loadCryptoHistory(symbol, days) {
-  const pairMap = {
-    'bitcoin': 'XBTUSD',
-    'the-open-network': 'TONUSD',
-    'ethereum': 'ETHUSD',
-  };
-  const pair = pairMap[symbol] || symbol;
-
-  const url = `https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=1440`;
-  const data = await fetchJSONViaProxy(url);
-
-  if (!data.result) throw new Error('Неверный формат Kraken');
-
-  const resultKey = Object.keys(data.result).find(k => k !== 'last');
-  if (!resultKey) throw new Error('Нет данных Kraken');
-
-  const candles = data.result[resultKey];
-  const recent = candles.slice(-days);
-
-  const labels = recent.map(c => new Date(c[0] * 1000).toISOString().slice(0, 10));
-  const values = recent.map(c => parseFloat(c[4]));
-
-  return { labels, values };
-}
-
-// Универсальная отрисовка одного графика крипты (с цветом по тренду)
-function drawCryptoChart(canvasId, statusId, data, label, currentInstance) {
-  const statusEl = document.getElementById(statusId);
-  const canvasEl = document.getElementById(canvasId);
-
-  if (currentInstance) currentInstance.destroy();
-
-  const color = getTrendColor(data.values);
-
-  const ctx = canvasEl.getContext('2d');
-  const chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: data.labels,
-      datasets: [{
-        label: label,
-        data: data.values,
-        borderColor: color.border,
-        backgroundColor: color.background,
-        fill: true,
-        tension: 0.25,
-        pointRadius: 0,
-        borderWidth: 2,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { mode: 'index', intersect: false },
-      },
-      scales: {
-        x: { display: false },
-        y: {
-          grid: { color: 'rgba(128,128,128,0.15)' },
-          ticks: { color: tg.themeParams?.hint_color || '#888', font: { size: 10 } }
-        }
-      }
-    }
-  });
-
-  const last = data.values[data.values.length - 1];
-  const first = data.values[0];
-  const change = ((last - first) / first * 100).toFixed(2);
-  statusEl.textContent = `$${last.toFixed(2)} • ${change > 0 ? '+' : ''}${change}%`;
-
-  return chart;
-}
-
-async function renderCryptoChart(days) {
-  const btcStatus = document.getElementById('btcStatus');
-  const tonStatus = document.getElementById('tonStatus');
-  const ethStatus = document.getElementById('ethStatus');
-
-  btcStatus.textContent = 'Загрузка...';
-  tonStatus.textContent = 'Ожидание...';
-  ethStatus.textContent = 'Ожидание...';
-
-  try {
-    // BTC
-    const btc = await loadCryptoHistory('bitcoin', days);
-    btcChartInstance = drawCryptoChart('btcChart', 'btcStatus', btc, 'BTC', btcChartInstance);
-
-    await new Promise(r => setTimeout(r, 3000));
-
-    // TON
-    tonStatus.textContent = 'Загрузка...';
-    const ton = await loadCryptoHistory('the-open-network', days);
-    tonChartInstance = drawCryptoChart('tonChart', 'tonStatus', ton, 'TON', tonChartInstance);
-
-    await new Promise(r => setTimeout(r, 3000));
-
-    // ETH
-    ethStatus.textContent = 'Загрузка...';
-    const eth = await loadCryptoHistory('ethereum', days);
-    ethChartInstance = drawCryptoChart('ethChart', 'ethStatus', eth, 'ETH', ethChartInstance);
-
-  } catch (e) {
-    console.error('Ошибка крипты:', e);
-    [btcStatus, tonStatus, ethStatus].forEach(s => {
-      if (s.textContent.includes('Загрузка') || s.textContent.includes('Ожидание')) {
-        s.textContent = 'Ошибка: ' + e.message;
-      }
-    });
-  }
-}
-
-document.querySelectorAll('#cryptoPeriods .period-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#cryptoPeriods .period-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    renderCryptoChart(parseInt(btn.dataset.days, 10));
-  });
-});
-
-// ============================================
-// Старт
-// ============================================
-switchTab('index');
+            grid: { color: 'rgba(128,128,128,0.15)'
