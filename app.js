@@ -139,12 +139,9 @@ async function loadIMOEX(days) {
 
     allRows = allRows.concat(rows);
 
-    // Если пришло меньше страницы — это конец
     if (rows.length < PAGE) break;
 
     start += PAGE;
-
-    // Защита от бесконечного цикла
     if (start > 10000) break;
   }
 
@@ -153,10 +150,18 @@ async function loadIMOEX(days) {
   const closeIdx = columns.indexOf('CLOSE');
   const dateIdx = columns.indexOf('TRADEDATE');
 
-  // MOEX отдаёт данные от новых к старым — разворачиваем
-  const sorted = allRows.slice().reverse();
-  const labels = sorted.map(r => r[dateIdx]);
-  const values = sorted.map(r => r[closeIdx]).filter(v => v !== null);
+  // Сортируем все строки по дате по возрастанию (старые → новые).
+  // Формат YYYY-MM-DD позволяет сравнивать как строки.
+  allRows.sort((a, b) => {
+    const da = a[dateIdx];
+    const db = b[dateIdx];
+    if (da < db) return -1;
+    if (da > db) return 1;
+    return 0;
+  });
+
+  const labels = allRows.map(r => r[dateIdx]);
+  const values = allRows.map(r => r[closeIdx]).filter(v => v !== null);
 
   return { labels, values };
 }
