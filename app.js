@@ -123,14 +123,38 @@ async function loadIMOEX(days) {
   from.setDate(from.getDate() - days);
   const fromStr = from.toISOString().slice(0, 10);
 
-  const url = `https://iss.moex.com/iss/history/engines/stock/markets/index/securities/IMOEX.json?from=${fromStr}`;
-  const data = await fetchViaProxy(url);
+  let allRows = [];
+  let columns = null;
+  let start = 0;
+  const PAGE = 100;
 
-  const { columns, data: rows } = data.history;
+  while (true) {
+    const url = `https://iss.moex.com/iss/history/engines/stock/markets/index/securities/IMOEX.json?from=${fromStr}&start=${start}`;
+    const data = await fetchViaProxy(url);
+
+    if (!data.history || !data.history.data) break;
+
+    if (!columns) columns = data.history.columns;
+    const rows = data.history.data;
+
+    allRows = allRows.concat(rows);
+
+    // Если пришло меньше страницы — это конец
+    if (rows.length < PAGE) break;
+
+    start += PAGE;
+
+    // Защита от бесконечного цикла
+    if (start > 10000) break;
+  }
+
+  if (!columns) throw new Error('Нет данных');
+
   const closeIdx = columns.indexOf('CLOSE');
   const dateIdx = columns.indexOf('TRADEDATE');
 
-  const sorted = rows.slice().reverse();
+  // MOEX отдаёт данные от новых к старым — разворачиваем
+  const sorted = allRows.slice().reverse();
   const labels = sorted.map(r => r[dateIdx]);
   const values = sorted.map(r => r[closeIdx]).filter(v => v !== null);
 
@@ -139,7 +163,7 @@ async function loadIMOEX(days) {
 
 async function renderIMOEXChart(days) {
   const statusEl = document.getElementById('chartStatus');
-  statusEl.textContent = 'Загрузка данных...';
+  statusEl.textContent = `Загрузка данных за ${days} дн...`;
 
   try {
     const { labels, values } = await loadIMOEX(days);
@@ -147,7 +171,6 @@ async function renderIMOEXChart(days) {
 
     const ctx = document.getElementById('imoexChart').getContext('2d');
 
-    // Пересоздаём график (Chart.js не любит менять данные на лету с разной длиной)
     if (imoexChartInstance) imoexChartInstance.destroy();
 
     imoexChartInstance = new Chart(ctx, {
