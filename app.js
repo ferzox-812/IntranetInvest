@@ -4,7 +4,7 @@
 // ============================================
 
 // ⚠️ ЗАМЕНИ на свой URL из Cloudflare Worker
-const PROXY = 'https://intranetinvest.romaievlev618.workers.dev';
+const PROXY = 'https://intranetinvest-proxy-v2.romaievlev618.workers.dev';
 
 // Инициализация Telegram WebApp
 const tg = window.Telegram.WebApp;
