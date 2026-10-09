@@ -11,13 +11,59 @@
 
   <header>
     <h1>IntranetInvest</h1>
-    <p class="subtitle" id="pageSubtitle">Индекс Мосбиржи</p>
+    <p class="subtitle" id="pageSubtitle">Главная</p>
   </header>
 
   <main id="content">
 
-    <!-- Вкладка: Акции -->
+    <!-- ============ ГЛАВНЫЙ ЭКРАН ============ -->
+    <section class="tab" data-tab="home">
+      <div class="home-grid">
+        <button class="home-tile" data-target="dollar">
+          <span class="home-icon">💵</span>
+          <span class="home-title">Доллар</span>
+        </button>
+        <button class="home-tile" data-target="crypto">
+          <span class="home-icon">🪙</span>
+          <span class="home-title">Крипта</span>
+        </button>
+        <button class="home-tile" data-target="index">
+          <span class="home-icon">📊</span>
+          <span class="home-title">Индекс Мосбиржи</span>
+        </button>
+        <button class="home-tile" data-target="markets">
+          <span class="home-icon">📈</span>
+          <span class="home-title">Акции и облигации</span>
+        </button>
+      </div>
+      <footer class="footer">
+        <a href="https://t.me/intronettx" target="_blank" class="footer-link">By Intranet</a>
+        <span class="footer-sub">Ferzixx's Creation</span>
+      </footer>
+    </section>
+
+    <!-- ============ ЭКРАН ВЫБОРА: АКЦИИ / ОБЛИГАЦИИ ============ -->
+    <section class="tab hidden" data-tab="markets">
+      <button class="back-btn" data-back="home">← Назад</button>
+      <div class="home-grid">
+        <button class="home-tile" data-target="stocks">
+          <span class="home-icon">📈</span>
+          <span class="home-title">Акции</span>
+        </button>
+        <button class="home-tile" data-target="bonds">
+          <span class="home-icon">💰</span>
+          <span class="home-title">Облигации</span>
+        </button>
+      </div>
+      <footer class="footer">
+        <a href="https://t.me/intronettx" target="_blank" class="footer-link">By Intranet</a>
+        <span class="footer-sub">Ferzixx's Creation</span>
+      </footer>
+    </section>
+
+    <!-- ============ АКЦИИ ============ -->
     <section class="tab hidden" data-tab="stocks">
+      <button class="back-btn" data-back="markets">← Назад</button>
       <div class="card">
         <div class="list-header">
           <span>Тикер</span>
@@ -34,8 +80,9 @@
       </footer>
     </section>
 
-    <!-- Вкладка: Облигации -->
+    <!-- ============ ОБЛИГАЦИИ ============ -->
     <section class="tab hidden" data-tab="bonds">
+      <button class="back-btn" data-back="markets">← Назад</button>
       <div class="card">
         <div class="list-header bonds-header">
           <span>Тикер</span>
@@ -53,8 +100,9 @@
       </footer>
     </section>
 
-    <!-- Вкладка: Индекс -->
-    <section class="tab" data-tab="index">
+    <!-- ============ ИНДЕКС ============ -->
+    <section class="tab hidden" data-tab="index">
+      <button class="back-btn" data-back="home">← Назад</button>
       <div class="card">
         <div class="period-switch" id="indexPeriods">
           <button class="period-btn" data-days="30">1М</button>
@@ -71,8 +119,9 @@
       </footer>
     </section>
 
-    <!-- Вкладка: Доллар -->
+    <!-- ============ ДОЛЛАР ============ -->
     <section class="tab hidden" data-tab="dollar">
+      <button class="back-btn" data-back="home">← Назад</button>
       <div class="card">
         <div class="period-switch" id="dollarPeriods">
           <button class="period-btn" data-days="30">1М</button>
@@ -88,8 +137,9 @@
       </footer>
     </section>
 
-    <!-- Вкладка: Крипта -->
+    <!-- ============ КРИПТА ============ -->
     <section class="tab hidden" data-tab="crypto">
+      <button class="back-btn" data-back="home">← Назад</button>
       <div class="card">
         <div class="period-switch" id="cryptoPeriods">
           <button class="period-btn" data-days="30">1М</button>
@@ -97,32 +147,28 @@
           <button class="period-btn active" data-days="365">1Г</button>
         </div>
       </div>
-
       <div class="card">
         <h3 style="margin: 0 0 8px; font-size: 15px;">Bitcoin (BTC)</h3>
         <canvas id="btcChart"></canvas>
         <p id="btcStatus" class="status">Загрузка...</p>
       </div>
-
       <div class="card">
         <h3 style="margin: 0 0 8px; font-size: 15px;">Toncoin (TON)</h3>
         <canvas id="tonChart"></canvas>
         <p id="tonStatus" class="status">Загрузка...</p>
       </div>
-
       <div class="card">
         <h3 style="margin: 0 0 8px; font-size: 15px;">Ethereum (ETH)</h3>
         <canvas id="ethChart"></canvas>
         <p id="ethStatus" class="status">Загрузка...</p>
       </div>
-
       <footer class="footer">
         <a href="https://t.me/intronettx" target="_blank" class="footer-link">By Intranet</a>
         <span class="footer-sub">Ferzixx's Creation</span>
       </footer>
     </section>
 
-    <!-- Экран конкретной бумаги -->
+    <!-- ============ ЭКРАН БУМАГИ ============ -->
     <section id="stockView" class="stock-view hidden">
       <button id="stockBack" class="back-btn">← Назад</button>
       <h2 id="stockTitle">—</h2>
@@ -142,28 +188,7 @@
 
   </main>
 
-  <nav class="tabbar">
-    <button class="tab-btn" data-target="stocks">
-      <span class="icon">📈</span>
-      <span class="label">Акции</span>
-    </button>
-    <button class="tab-btn" data-target="bonds">
-      <span class="icon">💰</span>
-      <span class="label">Облигации</span>
-    </button>
-    <button class="tab-btn active" data-target="index">
-      <span class="icon">📊</span>
-      <span class="label">Индекс</span>
-    </button>
-    <button class="tab-btn" data-target="dollar">
-      <span class="icon">💵</span>
-      <span class="label">Доллар</span>
-    </button>
-    <button class="tab-btn" data-target="crypto">
-      <span class="icon">🪙</span>
-      <span class="label">Крипта</span>
-    </button>
-  </nav>
+  <!-- Нижняя панель убирается, потому что теперь навигация через главный экран -->
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="app.js"></script>
