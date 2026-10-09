@@ -276,24 +276,9 @@ async function renderChart(target, secid, days) {
 }
 
 // ============================================
-// Доллар — ЦБ РФ (Windows-1251 → UTF-8)
+// Доллар — ЦБ РФ (через TextDecoder windows-1251)
 // ============================================
 let dollarChartInstance = null;
-
-function decodeWindows1251(bytes) {
-  const cp1251 = {
-    0x80:'Ђ',0x81:'Ѓ',0x82:'‚',0x83:'ѓ',0x84:'„',0x85:'…',0x86:'†',0x87:'‡',0x88:'€',0x89:'‰',0x8A:'Љ',0x8B:'‹',0x8C:'Њ',0x8D:'Ќ',0x8E:'Ћ',0x8F:'Џ',
-    0x90:'ђ',0x91:'‘',0x92:'’',0x93:'“',0x94:'”',0x95:'•',0x96:'–',0x97:'—',0x99:'™',0x9A:'љ',0x9B:'›',0x9C:'њ',0x9D:'ќ',0x9E:'ћ',0x9F:'џ',
-    0xA0:' ',0xA1:'Ў',0xA2:'ў',0xA3:'Ј',0xA4:'¤',0xA5:'Ґ',0xA6:'¦',0xA7:'§',0xA8:'Ё',0xA9:'©',0xAA:'Є',0xAB:'«',0xAC:'¬',0xAD:'­',0xAE:'®',0xAF:'Ї',
-    0xB0:'°',0xB1:'±',0xB2:'І',0xB3:'і',0xB4:'ґ',0xB5:'µ',0xB6:'¶',0xB7:'·',0xB8:'ё',0xB9:'№',0xBA:'є',0xBB:'»',0xBC:'ј',0xBD:'Ѕ',0xBE:'ѕ',0xBF:'ї',
-  };
-  let result = '';
-  for (let i = 0; i < bytes.length; i++) {
-    const b = bytes[i];
-    result += b < 128 ? String.fromCharCode(b) : (cp1251[b] || '?');
-  }
-  return result;
-}
 
 function parseCBRXml(xmlText) {
   const labels = [], values = [];
@@ -321,11 +306,11 @@ async function loadDollarHistory(days) {
   const fmt = (d) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
   const url = `https://www.cbr.ru/scripts/XML_dynamic.asp?date_req1=${fmt(start)}&date_req2=${fmt(end)}&VAL_NM_RQ=R01235`;
 
-  // Запрашиваем бинарно и декодируем из Windows-1251
   const response = await fetch(`${PROXY}?url=${encodeURIComponent(url)}`);
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const buffer = await response.arrayBuffer();
-  const xmlText = decodeWindows1251(new Uint8Array(buffer));
+  const decoder = new TextDecoder('windows-1251');
+  const xmlText = decoder.decode(buffer);
 
   const { labels, values } = parseCBRXml(xmlText);
   if (values.length === 0) throw new Error('ЦБ не вернул данные');
@@ -387,7 +372,7 @@ document.querySelectorAll('#dollarPeriods .period-btn').forEach(btn => {
 });
 
 // ============================================
-// Крипта — CoinGecko (последовательно с задержкой)
+// Крипта — CoinGecko (задержка 5 сек)
 // ============================================
 let cryptoChartInstance = null;
 
@@ -401,7 +386,6 @@ async function loadCryptoHistory(coinId, days) {
   const data = await fetchJSONViaProxy(url);
   if (!Array.isArray(data)) throw new Error('Неверный формат CoinGecko');
 
-  // Формат: [timestamp, open, high, low, close]
   const labels = data.map(row => new Date(row[0]).toISOString().slice(0, 10));
   const values = data.map(row => row[4]);
   return { labels, values };
@@ -413,15 +397,14 @@ async function renderCryptoChart(days) {
   statusEl.textContent = `Загрузка за ${days} дн...`;
 
   try {
-    // Последовательно, чтобы не получить 429
     statusEl.textContent = 'Загрузка BTC...';
     const btc = await loadCryptoHistory('bitcoin', days);
 
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 5000));
     statusEl.textContent = 'Загрузка TON...';
     const ton = await loadCryptoHistory('the-open-network', days);
 
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 5000));
     statusEl.textContent = 'Загрузка ETH...';
     const eth = await loadCryptoHistory('ethereum', days);
 
