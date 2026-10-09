@@ -351,9 +351,11 @@ document.querySelectorAll('#dollarPeriods .period-btn').forEach(btn => {
 });
 
 // ============================================
-// Крипта — Kraken API (пауза 3 сек)
+// Крипта — Kraken API (3 отдельных графика)
 // ============================================
-let cryptoChartInstance = null;
+let btcChartInstance = null;
+let tonChartInstance = null;
+let ethChartInstance = null;
 
 async function loadCryptoHistory(symbol, days) {
   const pairMap = {
@@ -363,7 +365,6 @@ async function loadCryptoHistory(symbol, days) {
   };
   const pair = pairMap[symbol] || symbol;
 
-  // Kraken OHLC: interval=1440 (1 день), отдаёт до 720 свечей
   const url = `https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=1440`;
   const data = await fetchJSONViaProxy(url);
 
@@ -376,61 +377,94 @@ async function loadCryptoHistory(symbol, days) {
   const recent = candles.slice(-days);
 
   const labels = recent.map(c => new Date(c[0] * 1000).toISOString().slice(0, 10));
-  const values = recent.map(c => parseFloat(c[4])); // close
+  const values = recent.map(c => parseFloat(c[4]));
 
   return { labels, values };
 }
 
-async function renderCryptoChart(days) {
-  const statusEl = document.getElementById('cryptoStatus');
-  const canvasEl = document.getElementById('cryptoChart');
-  statusEl.textContent = `Загрузка за ${days} дн...`;
+// Универсальная отрисовка одного графика крипты
+function drawCryptoChart(canvasId, statusId, data, color, label, currentInstance) {
+  const statusEl = document.getElementById(statusId);
+  const canvasEl = document.getElementById(canvasId);
 
-  try {
-    statusEl.textContent = 'Загрузка BTC...';
-    const btc = await loadCryptoHistory('bitcoin', days);
-    await new Promise(r => setTimeout(r, 3000));
+  if (currentInstance) currentInstance.destroy();
 
-    statusEl.textContent = 'Загрузка TON...';
-    const ton = await loadCryptoHistory('the-open-network', days);
-    await new Promise(r => setTimeout(r, 3000));
-
-    statusEl.textContent = 'Загрузка ETH...';
-    const eth = await loadCryptoHistory('ethereum', days);
-
-    const ctx = canvasEl.getContext('2d');
-    if (cryptoChartInstance) cryptoChartInstance.destroy();
-
-    cryptoChartInstance = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: btc.labels,
-        datasets: [
-          { label: 'BTC', data: btc.values, borderColor: '#f2a900', backgroundColor: 'rgba(242, 169, 0, 0.05)', fill: false, tension: 0.25, pointRadius: 0, borderWidth: 2 },
-          { label: 'TON', data: ton.values, borderColor: '#2481cc', backgroundColor: 'rgba(36, 129, 204, 0.05)', fill: false, tension: 0.25, pointRadius: 0, borderWidth: 2 },
-          { label: 'ETH', data: eth.values, borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.05)', fill: false, tension: 0.25, pointRadius: 0, borderWidth: 2 },
-        ]
+  const ctx = canvasEl.getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        label: label,
+        data: data.values,
+        borderColor: color,
+        backgroundColor: color.replace('rgb', 'rgba').replace(')', ', 0.15)'),
+        fill: true,
+        tension: 0.25,
+        pointRadius: 0,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false },
       },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: {
-          legend: { display: true, labels: { color: tg.themeParams?.text_color || '#000', font: { size: 11 } } },
-          tooltip: { mode: 'index', intersect: false },
-        },
-        scales: {
-          x: { display: false },
-          y: {
-            grid: { color: 'rgba(128,128,128,0.15)' },
-            ticks: { color: tg.themeParams?.hint_color || '#888', font: { size: 10 } }
-          }
+      scales: {
+        x: { display: false },
+        y: {
+          grid: { color: 'rgba(128,128,128,0.15)' },
+          ticks: { color: tg.themeParams?.hint_color || '#888', font: { size: 10 } }
         }
       }
-    });
+    }
+  });
 
-    statusEl.textContent = 'BTC (жёлтый) • TON (синий) • ETH (фиолетовый)';
+  const last = data.values[data.values.length - 1];
+  const first = data.values[0];
+  const change = ((last - first) / first * 100).toFixed(2);
+  statusEl.textContent = `$${last.toFixed(2)} • ${change > 0 ? '+' : ''}${change}%`;
+
+  return chart;
+}
+
+async function renderCryptoChart(days) {
+  const btcStatus = document.getElementById('btcStatus');
+  const tonStatus = document.getElementById('tonStatus');
+  const ethStatus = document.getElementById('ethStatus');
+
+  btcStatus.textContent = 'Загрузка...';
+  tonStatus.textContent = 'Ожидание...';
+  ethStatus.textContent = 'Ожидание...';
+
+  try {
+    // BTC — жёлтый
+    const btc = await loadCryptoHistory('bitcoin', days);
+    btcChartInstance = drawCryptoChart('btcChart', 'btcStatus', btc, 'rgb(242, 169, 0)', 'BTC', btcChartInstance);
+
+    await new Promise(r => setTimeout(r, 3000));
+
+    // TON — синий
+    tonStatus.textContent = 'Загрузка...';
+    const ton = await loadCryptoHistory('the-open-network', days);
+    tonChartInstance = drawCryptoChart('tonChart', 'tonStatus', ton, 'rgb(36, 129, 204)', 'TON', tonChartInstance);
+
+    await new Promise(r => setTimeout(r, 3000));
+
+    // ETH — фиолетовый
+    ethStatus.textContent = 'Загрузка...';
+    const eth = await loadCryptoHistory('ethereum', days);
+    ethChartInstance = drawCryptoChart('ethChart', 'ethStatus', eth, 'rgb(139, 92, 246)', 'ETH', ethChartInstance);
+
   } catch (e) {
     console.error('Ошибка крипты:', e);
-    statusEl.textContent = 'Ошибка: ' + e.message;
+    [btcStatus, tonStatus, ethStatus].forEach(s => {
+      if (s.textContent.includes('Загрузка') || s.textContent.includes('Ожидание')) {
+        s.textContent = 'Ошибка: ' + e.message;
+      }
+    });
   }
 }
 
