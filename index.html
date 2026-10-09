@@ -9,17 +9,15 @@
 </head>
 <body>
 
-  <!-- Шапка -->
   <header>
     <h1>IntranetInvest</h1>
-    <p class="subtitle" id="pageSubtitle">Акции</p>
+    <p class="subtitle" id="pageSubtitle">Индекс Мосбиржи</p>
   </header>
 
-  <!-- Контент вкладок -->
   <main id="content">
 
     <!-- Вкладка: Акции -->
-    <section class="tab" data-tab="stocks">
+    <section class="tab hidden" data-tab="stocks">
       <div class="card">
         <div class="list-header">
           <span>Тикер</span>
@@ -40,8 +38,14 @@
     </section>
 
     <!-- Вкладка: Индекс -->
-    <section class="tab hidden" data-tab="index">
+    <section class="tab" data-tab="index">
       <div class="card">
+        <div class="period-switch" id="indexPeriods">
+          <button class="period-btn" data-days="30">1М</button>
+          <button class="period-btn" data-days="180">6М</button>
+          <button class="period-btn active" data-days="365">1Г</button>
+          <button class="period-btn" data-days="1825">5Л</button>
+        </div>
         <canvas id="imoexChart"></canvas>
         <p id="chartStatus" class="status">Загрузка данных...</p>
       </div>
@@ -63,7 +67,6 @@
 
   </main>
 
-  <!-- Нижняя таб-панель -->
   <nav class="tabbar">
     <button class="tab-btn" data-target="stocks">
       <span class="icon">📈</span>
