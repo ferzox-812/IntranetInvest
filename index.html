@@ -33,7 +33,15 @@
     <!-- Вкладка: Облигации -->
     <section class="tab hidden" data-tab="bonds">
       <div class="card">
-        <p class="status">Раздел «Облигации» в разработке</p>
+        <div class="list-header bonds-header">
+          <span>Тикер</span>
+          <span>Купон</span>
+          <span>Цена</span>
+          <span>Доходн.</span>
+        </div>
+        <div id="bondsList" class="list">
+          <p class="status">Загрузка облигаций...</p>
+        </div>
       </div>
     </section>
 
@@ -65,7 +73,7 @@
       </div>
     </section>
 
-    <!-- Экран конкретной акции (открывается поверх табов) -->
+    <!-- Экран конкретной бумаги (акция или облигация) -->
     <section id="stockView" class="stock-view hidden">
       <button id="stockBack" class="back-btn">← Назад</button>
       <h2 id="stockTitle">—</h2>
