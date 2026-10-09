@@ -276,7 +276,7 @@ async function renderChart(target, secid, days) {
 }
 
 // ============================================
-// Доллар — Frankfurter API (бесплатный, без ключа)
+// Доллар — Frankfurter API
 // ============================================
 let dollarChartInstance = null;
 
@@ -351,23 +351,31 @@ document.querySelectorAll('#dollarPeriods .period-btn').forEach(btn => {
 });
 
 // ============================================
-// Крипта — CoinCap API (без 429)
+// Крипта — CoinPaprika API
 // ============================================
 let cryptoChartInstance = null;
 
 async function loadCryptoHistory(coinId, days) {
-  const limit = Math.min(days, 365);
-  const coinMap = { 'bitcoin': 'bitcoin', 'the-open-network': 'toncoin', 'ethereum': 'ethereum' };
-  const capId = coinMap[coinId] || coinId;
+  // CoinPaprika использует ID вида btc-bitcoin, eth-ethereum, ton-toncoin
+  const coinMap = {
+    'bitcoin': 'btc-bitcoin',
+    'the-open-network': 'ton-toncoin',
+    'ethereum': 'eth-ethereum',
+  };
+  const paprikaId = coinMap[coinId] || coinId;
 
-  const url = `https://api.coincap.io/v2/assets/${capId}/history?interval=d1&limit=${limit}`;
+  const start = new Date();
+  start.setDate(start.getDate() - days);
+  const startStr = start.toISOString().slice(0, 10);
+
+  const url = `https://api.coinpaprika.com/v1/tickers/${paprikaId}/historical?start=${startStr}&interval=1d`;
   const data = await fetchJSONViaProxy(url);
 
-  if (!data.data || !Array.isArray(data.data)) throw new Error('Неверный формат CoinCap');
-  const sorted = data.data.slice().sort((a, b) => a.time - b.time);
+  if (!Array.isArray(data)) throw new Error('Неверный формат CoinPaprika');
 
-  const labels = sorted.map(row => new Date(row.time).toISOString().slice(0, 10));
-  const values = sorted.map(row => parseFloat(row.priceUsd));
+  // Формат: [{ timestamp: "2024-01-01T00:00:00Z", price: 42000, ... }]
+  const labels = data.map(row => row.timestamp.slice(0, 10));
+  const values = data.map(row => row.price);
 
   return { labels, values };
 }
@@ -381,11 +389,11 @@ async function renderCryptoChart(days) {
     statusEl.textContent = 'Загрузка BTC...';
     const btc = await loadCryptoHistory('bitcoin', days);
     await new Promise(r => setTimeout(r, 500));
-    
+
     statusEl.textContent = 'Загрузка TON...';
     const ton = await loadCryptoHistory('the-open-network', days);
     await new Promise(r => setTimeout(r, 500));
-    
+
     statusEl.textContent = 'Загрузка ETH...';
     const eth = await loadCryptoHistory('ethereum', days);
 
