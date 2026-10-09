@@ -87,6 +87,17 @@ canvas {
   font-size: 14px;
 }
 
+/* Отдельная сетка для облигаций — 4 колонки */
+.list-header.bonds-header,
+.bond-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 0;
+  font-size: 13px;
+}
+
 .list-header {
   font-size: 11px;
   opacity: 0.5;
@@ -97,7 +108,8 @@ canvas {
   margin-bottom: 4px;
 }
 
-.stock-row {
+.stock-row,
+.bond-row {
   border-bottom: 1px solid rgba(128,128,128,0.08);
   cursor: pointer;
   transition: background 0.15s;
@@ -106,8 +118,11 @@ canvas {
   margin: 0 -4px;
 }
 
-.stock-row:active { background: rgba(128,128,128,0.1); }
-.stock-row:last-child { border-bottom: none; }
+.stock-row:active,
+.bond-row:active { background: rgba(128,128,128,0.1); }
+
+.stock-row:last-child,
+.bond-row:last-child { border-bottom: none; }
 
 .stock-ticker { font-weight: 600; }
 
@@ -117,7 +132,8 @@ canvas {
   margin-top: 2px;
 }
 
-.stock-price {
+.stock-price,
+.bond-cell {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
@@ -131,7 +147,12 @@ canvas {
 .stock-change.up { color: #26a269; }
 .stock-change.down { color: #e01b24; }
 
-/* --- Экран акции --- */
+.bond-coupon {
+  color: #2481cc;
+  font-weight: 500;
+}
+
+/* --- Экран бумаги --- */
 .stock-view {
   position: fixed;
   top: 0;
