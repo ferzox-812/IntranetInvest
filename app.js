@@ -410,7 +410,8 @@ async function loadDollarHistory(days) {
   from.setDate(from.getDate() - days);
   const fromStr = from.toISOString().slice(0, 10);
 
-  const baseUrl = `https://iss.moex.com/iss/history/engines/currency/markets/selt/boards/CETS/securities/USD000UTSTOM.json`;
+  // USD000000TOD — доллар с расчётами "сегодня", есть сделки каждый торговый день
+  const baseUrl = `https://iss.moex.com/iss/history/engines/currency/markets/selt/boards/CETS/securities/USD000000TOD.json`;
 
   let allRows = [];
   let columns = null;
@@ -447,8 +448,10 @@ async function loadDollarHistory(days) {
     return 0;
   });
 
+  // Не фильтруем null — оставляем на своих местах,
+  // чтобы график не искажался
   const labels = allRows.map(r => r[dateIdx]);
-  const values = allRows.map(r => r[closeIdx]).filter(v => v !== null);
+  const values = allRows.map(r => r[closeIdx]);
 
   return { labels, values };
 }
@@ -478,6 +481,7 @@ async function renderDollarChart(days) {
           tension: 0.25,
           pointRadius: 0,
           borderWidth: 2,
+          spanGaps: true,
         }]
       },
       options: {
@@ -494,7 +498,8 @@ async function renderDollarChart(days) {
       }
     });
 
-    const last = values[values.length - 1];
+    const validValues = values.filter(v => v != null);
+    const last = validValues[validValues.length - 1];
     statusEl.textContent = `Текущий курс: ${last.toFixed(4)} ₽`;
   } catch (e) {
     console.error('Ошибка курса доллара:', e);
@@ -502,7 +507,6 @@ async function renderDollarChart(days) {
   }
 }
 
-// Кнопки периодов для доллара
 document.querySelectorAll('#dollarPeriods .period-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#dollarPeriods .period-btn').forEach(b => b.classList.remove('active'));
@@ -512,29 +516,24 @@ document.querySelectorAll('#dollarPeriods .period-btn').forEach(btn => {
 });
 
 // ============================================
-// Вкладка «Крипта» — BTC + TON + ETH через CoinGecko
+// Вкладка «Крипта» — BTC + TON + ETH через Binance
 // ============================================
 let cryptoChartInstance = null;
 
-async function loadCryptoHistory(coinId, days) {
-  // CoinGecko: доступны только 1, 7, 14, 30, 90, 180, 365
-  const allowed = [1, 7, 14, 30, 90, 180, 365];
-  let daysParam = 365;
-  for (const d of allowed) {
-    if (days <= d) { daysParam = d; break; }
-  }
+async function loadCryptoHistory(symbol, days) {
+  const limit = Math.min(days, 1000);
 
-  const url = `https://api.coingecko.com/api/v3/coins/${coinId}/ohlc?vs_currency=usd&days=${daysParam}`;
+  const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=${limit}`;
   const data = await fetchViaProxy(url);
 
-  if (!Array.isArray(data)) throw new Error('Неверный формат данных');
+  if (!Array.isArray(data)) throw new Error('Неверный формат данных Binance');
 
-  // Формат: [timestamp, open, high, low, close]
+  // Формат: [openTime, open, high, low, close, volume, closeTime, ...]
   const labels = data.map(row => {
     const d = new Date(row[0]);
     return d.toISOString().slice(0, 10);
   });
-  const values = data.map(row => row[4]);
+  const values = data.map(row => parseFloat(row[4]));
 
   return { labels, values };
 }
@@ -546,9 +545,9 @@ async function renderCryptoChart(days) {
 
   try {
     const [btc, ton, eth] = await Promise.all([
-      loadCryptoHistory('bitcoin', days),
-      loadCryptoHistory('the-open-network', days),
-      loadCryptoHistory('ethereum', days),
+      loadCryptoHistory('BTCUSDT', days),
+      loadCryptoHistory('TONUSDT', days),
+      loadCryptoHistory('ETHUSDT', days),
     ]);
 
     const ctx = canvasEl.getContext('2d');
@@ -621,7 +620,6 @@ async function renderCryptoChart(days) {
   }
 }
 
-// Кнопки периодов для крипты
 document.querySelectorAll('#cryptoPeriods .period-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#cryptoPeriods .period-btn').forEach(b => b.classList.remove('active'));
