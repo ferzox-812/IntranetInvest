@@ -25,7 +25,7 @@ async function fetchJSONViaProxy(targetUrl) {
 }
 
 // ============================================
-// Цвет тренда: зелёный при росте, красный при падении
+// Цвет тренда
 // ============================================
 function getTrendColor(values) {
   const clean = values.filter(v => v != null);
@@ -35,7 +35,6 @@ function getTrendColor(values) {
   const first = clean[0];
   const last = clean[clean.length - 1];
   const isGrowing = last >= first;
-
   return isGrowing
     ? { border: '#26a269', background: 'rgba(38, 162, 105, 0.15)' }
     : { border: '#e01b24', background: 'rgba(224, 27, 36, 0.15)' };
@@ -61,19 +60,17 @@ function switchTab(name) {
   document.querySelector(`.tab[data-tab="${name}"]`)?.classList.remove('hidden');
   document.getElementById('pageSubtitle').textContent = SUBTITLES[name] || '';
 
-  if (name === 'index' && !LOADED.index) { LOADED.index = true; renderChart('index', 'IMOEX', 365); }
+  if (name === 'index' && !LOADED.index) { LOADED.index = true; renderChart('index', 'IMOEX', { days: 365 }); }
   if (name === 'stocks' && !LOADED.stocks) { LOADED.stocks = true; renderStocksList(); }
   if (name === 'bonds' && !LOADED.bonds) { LOADED.bonds = true; renderBondsList(); }
-  if (name === 'dollar' && !LOADED.dollar) { LOADED.dollar = true; renderDollarChart(365); }
-  if (name === 'crypto' && !LOADED.crypto) { LOADED.crypto = true; renderCryptoChart(365); }
+  if (name === 'dollar' && !LOADED.dollar) { LOADED.dollar = true; renderDollarChart({ days: 365 }); }
+  if (name === 'crypto' && !LOADED.crypto) { LOADED.crypto = true; renderCryptoChart({ days: 365 }); }
 }
 
-// Клик по плиткам
 document.querySelectorAll('.home-tile').forEach(tile => {
   tile.addEventListener('click', () => switchTab(tile.dataset.target));
 });
 
-// Клик по "Назад"
 document.querySelectorAll('.back-btn[data-back]').forEach(btn => {
   btn.addEventListener('click', () => switchTab(btn.dataset.back));
 });
@@ -95,9 +92,7 @@ async function renderStocksList() {
       const md = mdRows[i] || [];
       const last = md[iLast], prev = md[iPrev], turnover = md[iValToday] || 0;
       return {
-        ticker: row[iSecId],
-        name: row[iShortName],
-        last,
+        ticker: row[iSecId], name: row[iShortName], last,
         change: (last && prev) ? ((last - prev) / prev * 100) : null,
         turnover,
       };
@@ -186,7 +181,7 @@ function openStockView(ticker, name, type) {
   document.querySelectorAll('#stockPeriods .period-btn').forEach(b => b.classList.remove('active'));
   document.querySelector('#stockPeriods .period-btn[data-days="365"]')?.classList.add('active');
   document.getElementById('stockView').classList.remove('hidden');
-  renderChart(type === 'bond' ? 'bond' : 'stock', ticker, 365);
+  renderChart(type === 'bond' ? 'bond' : 'stock', ticker, { days: 365 });
 }
 
 function closeStockView() {
@@ -198,39 +193,25 @@ function closeStockView() {
 
 document.getElementById('stockBack').addEventListener('click', closeStockView);
 
-document.querySelectorAll('#stockPeriods .period-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#stockPeriods .period-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    if (currentTicker) renderChart(currentType === 'bond' ? 'bond' : 'stock', currentTicker, parseInt(btn.dataset.days, 10));
-  });
-});
-
-document.querySelectorAll('#indexPeriods .period-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#indexPeriods .period-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    renderChart('index', 'IMOEX', parseInt(btn.dataset.days, 10));
-  });
-});
-
 // ============================================
 // История MOEX
 // ============================================
-async function loadHistory(target, secid, days) {
+async function loadHistory(target, secid, period) {
+  const is24h = period.hours === 24;
+  const days = is24h ? 3 : period.days;
+
   const from = new Date();
   from.setDate(from.getDate() - days);
   const fromStr = from.toISOString().slice(0, 10);
 
-  let baseUrl;
-  if (target === 'index') baseUrl = `https://iss.moex.com/iss/history/engines/stock/markets/index/securities/${secid}.json`;
-  else if (target === 'bond') baseUrl = `https://iss.moex.com/iss/history/engines/stock/markets/bonds/boards/TQOB/securities/${secid}.json`;
-  else baseUrl = `https://iss.moex.com/iss/history/engines/stock/markets/shares/boards/TQBR/securities/${secid}.json`;
+  let endpoint;
+  if (target === 'index') endpoint = `https://iss.moex.com/iss/history/engines/stock/markets/index/securities/${secid}.json`;
+  else if (target === 'bond') endpoint = `https://iss.moex.com/iss/history/engines/stock/markets/bonds/boards/TQOB/securities/${secid}.json`;
+  else endpoint = `https://iss.moex.com/iss/history/engines/stock/markets/shares/boards/TQBR/securities/${secid}.json`;
 
   let allRows = [], columns = null, start = 0;
-
   while (true) {
-    const data = await fetchJSONViaProxy(`${baseUrl}?from=${fromStr}&start=${start}`);
+    const data = await fetchJSONViaProxy(`${endpoint}?from=${fromStr}&start=${start}`);
     if (!data.history || !data.history.data) break;
     if (!columns) columns = data.history.columns;
     allRows = allRows.concat(data.history.data);
@@ -250,13 +231,14 @@ async function loadHistory(target, secid, days) {
   };
 }
 
-async function renderChart(target, secid, days) {
+async function renderChart(target, secid, period) {
   const statusEl = document.getElementById(target === 'index' ? 'chartStatus' : 'stockChartStatus');
   const canvasEl = document.getElementById(target === 'index' ? 'imoexChart' : 'stockChart');
-  statusEl.textContent = `Загрузка за ${days} дн...`;
+  const label = period.hours ? '24Ч' : `${period.days} дн`;
+  statusEl.textContent = `Загрузка за ${label}...`;
 
   try {
-    const { labels, values } = await loadHistory(target, secid, days);
+    const { labels, values } = await loadHistory(target, secid, period);
     if (values.length === 0) throw new Error('Нет данных за период');
     const ctx = canvasEl.getContext('2d');
     if (target === 'index' && window.__imoexChartInstance) window.__imoexChartInstance.destroy();
@@ -302,12 +284,37 @@ async function renderChart(target, secid, days) {
   }
 }
 
+// Обработчики периодов: индекс
+document.querySelectorAll('#indexPeriods .period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#indexPeriods .period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const period = btn.dataset.hours ? { hours: 24 } : { days: parseInt(btn.dataset.days, 10) };
+    renderChart('index', 'IMOEX', period);
+  });
+});
+
+// Обработчики периодов: бумага
+document.querySelectorAll('#stockPeriods .period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#stockPeriods .period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (currentTicker) {
+      const period = btn.dataset.hours ? { hours: 24 } : { days: parseInt(btn.dataset.days, 10) };
+      renderChart(currentType === 'bond' ? 'bond' : 'stock', currentTicker, period);
+    }
+  });
+});
+
 // ============================================
 // Доллар — Frankfurter API
 // ============================================
 let dollarChartInstance = null;
 
-async function loadDollarHistory(days) {
+async function loadDollarHistory(period) {
+  // Frankfurter отдаёт только дневные данные.
+  // Для 24Ч берём последние 7 дней — минимальный осмысленный отрезок.
+  const days = period.hours === 24 ? 7 : period.days;
   const end = new Date();
   const start = new Date();
   start.setDate(start.getDate() - days);
@@ -326,13 +333,14 @@ async function loadDollarHistory(days) {
   return { labels, values };
 }
 
-async function renderDollarChart(days) {
+async function renderDollarChart(period) {
   const statusEl = document.getElementById('dollarStatus');
   const canvasEl = document.getElementById('dollarChart');
-  statusEl.textContent = `Загрузка за ${days} дн...`;
+  const label = period.hours ? '24Ч (7 дней)' : `${period.days} дн`;
+  statusEl.textContent = `Загрузка за ${label}...`;
 
   try {
-    const { labels, values } = await loadDollarHistory(days);
+    const { labels, values } = await loadDollarHistory(period);
     if (values.length === 0) throw new Error('Нет данных');
     const ctx = canvasEl.getContext('2d');
     if (dollarChartInstance) dollarChartInstance.destroy();
@@ -375,18 +383,19 @@ document.querySelectorAll('#dollarPeriods .period-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#dollarPeriods .period-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    renderDollarChart(parseInt(btn.dataset.days, 10));
+    const period = btn.dataset.hours ? { hours: 24 } : { days: parseInt(btn.dataset.days, 10) };
+    renderDollarChart(period);
   });
 });
 
 // ============================================
-// Крипта — Kraken API (3 отдельных графика)
+// Крипта — Kraken API (часовые свечи для 24Ч)
 // ============================================
 let btcChartInstance = null;
 let tonChartInstance = null;
 let ethChartInstance = null;
 
-async function loadCryptoHistory(symbol, days) {
+async function loadCryptoHistory(symbol, period) {
   const pairMap = {
     'bitcoin': 'XBTUSD',
     'the-open-network': 'TONUSD',
@@ -394,18 +403,26 @@ async function loadCryptoHistory(symbol, days) {
   };
   const pair = pairMap[symbol] || symbol;
 
-  const url = `https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=1440`;
+  const is24h = period.hours === 24;
+  const interval = is24h ? 60 : 1440;  // 60 = часовые, 1440 = дневные
+  const limit = is24h ? 24 : period.days;
+
+  const url = `https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=${interval}`;
   const data = await fetchJSONViaProxy(url);
 
   if (!data.result) throw new Error('Неверный формат Kraken');
-
   const resultKey = Object.keys(data.result).find(k => k !== 'last');
   if (!resultKey) throw new Error('Нет данных Kraken');
 
   const candles = data.result[resultKey];
-  const recent = candles.slice(-days);
+  const recent = candles.slice(-limit);
 
-  const labels = recent.map(c => new Date(c[0] * 1000).toISOString().slice(0, 10));
+  const labels = recent.map(c => {
+    const d = new Date(c[0] * 1000);
+    return is24h
+      ? d.toISOString().slice(11, 16)  // HH:MM для 24Ч
+      : d.toISOString().slice(0, 10);   // YYYY-MM-DD для остальных
+  });
   const values = recent.map(c => parseFloat(c[4]));
 
   return { labels, values };
@@ -416,7 +433,6 @@ function drawCryptoChart(canvasId, statusId, data, label, currentInstance) {
   const canvasEl = document.getElementById(canvasId);
 
   if (currentInstance) currentInstance.destroy();
-
   const color = getTrendColor(data.values);
 
   const ctx = canvasEl.getContext('2d');
@@ -429,19 +445,12 @@ function drawCryptoChart(canvasId, statusId, data, label, currentInstance) {
         data: data.values,
         borderColor: color.border,
         backgroundColor: color.background,
-        fill: true,
-        tension: 0.25,
-        pointRadius: 0,
-        borderWidth: 2,
+        fill: true, tension: 0.25, pointRadius: 0, borderWidth: 2,
       }]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { mode: 'index', intersect: false },
-      },
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
       scales: {
         x: { display: false },
         y: {
@@ -460,7 +469,7 @@ function drawCryptoChart(canvasId, statusId, data, label, currentInstance) {
   return chart;
 }
 
-async function renderCryptoChart(days) {
+async function renderCryptoChart(period) {
   const btcStatus = document.getElementById('btcStatus');
   const tonStatus = document.getElementById('tonStatus');
   const ethStatus = document.getElementById('ethStatus');
@@ -470,21 +479,20 @@ async function renderCryptoChart(days) {
   ethStatus.textContent = 'Ожидание...';
 
   try {
-    const btc = await loadCryptoHistory('bitcoin', days);
+    const btc = await loadCryptoHistory('bitcoin', period);
     btcChartInstance = drawCryptoChart('btcChart', 'btcStatus', btc, 'BTC', btcChartInstance);
 
-    await new Promise(r => setTimeout(r, 3000));
+    await new Promise(r => setTimeout(r, 1000));
 
     tonStatus.textContent = 'Загрузка...';
-    const ton = await loadCryptoHistory('the-open-network', days);
+    const ton = await loadCryptoHistory('the-open-network', period);
     tonChartInstance = drawCryptoChart('tonChart', 'tonStatus', ton, 'TON', tonChartInstance);
 
-    await new Promise(r => setTimeout(r, 3000));
+    await new Promise(r => setTimeout(r, 1000));
 
     ethStatus.textContent = 'Загрузка...';
-    const eth = await loadCryptoHistory('ethereum', days);
+    const eth = await loadCryptoHistory('ethereum', period);
     ethChartInstance = drawCryptoChart('ethChart', 'ethStatus', eth, 'ETH', ethChartInstance);
-
   } catch (e) {
     console.error('Ошибка крипты:', e);
     [btcStatus, tonStatus, ethStatus].forEach(s => {
@@ -499,11 +507,12 @@ document.querySelectorAll('#cryptoPeriods .period-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#cryptoPeriods .period-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    renderCryptoChart(parseInt(btn.dataset.days, 10));
+    const period = btn.dataset.hours ? { hours: 24 } : { days: parseInt(btn.dataset.days, 10) };
+    renderCryptoChart(period);
   });
 });
 
 // ============================================
-// Старт — главный экран
+// Старт
 // ============================================
 switchTab('home');
