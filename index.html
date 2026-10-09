@@ -2,23 +2,90 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <title>IntranetInvest</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- Шапка -->
   <header>
     <h1>IntranetInvest</h1>
-    <p class="subtitle">Индекс Мосбиржи</p>
+    <p class="subtitle" id="pageSubtitle">Акции</p>
   </header>
 
-  <main>
-    <div class="card">
-      <canvas id="imoexChart"></canvas>
-      <p id="chartStatus" class="status">Загрузка данных...</p>
-    </div>
+  <!-- Контент вкладок -->
+  <main id="content">
+
+    <!-- Вкладка: Акции -->
+    <section class="tab" data-tab="stocks">
+      <div class="card">
+        <div class="list-header">
+          <span>Тикер</span>
+          <span>Цена</span>
+          <span>Δ</span>
+        </div>
+        <div id="stocksList" class="list">
+          <p class="status">Загрузка акций...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Вкладка: Облигации -->
+    <section class="tab hidden" data-tab="bonds">
+      <div class="card">
+        <p class="status">Раздел «Облигации» в разработке</p>
+      </div>
+    </section>
+
+    <!-- Вкладка: Индекс -->
+    <section class="tab hidden" data-tab="index">
+      <div class="card">
+        <canvas id="imoexChart"></canvas>
+        <p id="chartStatus" class="status">Загрузка данных...</p>
+      </div>
+    </section>
+
+    <!-- Вкладка: Ставка -->
+    <section class="tab hidden" data-tab="rate">
+      <div class="card">
+        <p class="status">Раздел «Ключевая ставка» в разработке</p>
+      </div>
+    </section>
+
+    <!-- Вкладка: Инфляция -->
+    <section class="tab hidden" data-tab="inflation">
+      <div class="card">
+        <p class="status">Раздел «Инфляция» в разработке</p>
+      </div>
+    </section>
+
   </main>
+
+  <!-- Нижняя таб-панель -->
+  <nav class="tabbar">
+    <button class="tab-btn" data-target="stocks">
+      <span class="icon">📈</span>
+      <span class="label">Акции</span>
+    </button>
+    <button class="tab-btn" data-target="bonds">
+      <span class="icon">💰</span>
+      <span class="label">Облигации</span>
+    </button>
+    <button class="tab-btn active" data-target="index">
+      <span class="icon">📊</span>
+      <span class="label">Индекс</span>
+    </button>
+    <button class="tab-btn" data-target="rate">
+      <span class="icon">🏦</span>
+      <span class="label">Ставка</span>
+    </button>
+    <button class="tab-btn" data-target="inflation">
+      <span class="icon">📉</span>
+      <span class="label">Инфляция</span>
+    </button>
+  </nav>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="app.js"></script>
