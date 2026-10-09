@@ -25,8 +25,8 @@ const SUBTITLES = {
   stocks: 'Акции',
   bonds: 'Облигации',
   index: 'Индекс Мосбиржи',
-  rate: 'Ключевая ставка',
-  inflation: 'Инфляция',
+  dollar: 'Курс доллара',
+  crypto: 'Криптовалюты',
 };
 
 function switchTab(name) {
@@ -50,13 +50,13 @@ function switchTab(name) {
     window.__bondsLoaded = true;
     renderBondsList();
   }
-  if (name === 'rate' && !window.__rateLoaded) {
-    window.__rateLoaded = true;
-    renderKeyRateChart();
+  if (name === 'dollar' && !window.__dollarLoaded) {
+    window.__dollarLoaded = true;
+    renderDollarChart(365);
   }
-  if (name === 'inflation' && !window.__inflationLoaded) {
-    window.__inflationLoaded = true;
-    renderInflationChart();
+  if (name === 'crypto' && !window.__cryptoLoaded) {
+    window.__cryptoLoaded = true;
+    renderCryptoChart(365);
   }
 }
 
@@ -401,36 +401,234 @@ async function renderChart(target, secid, days) {
 }
 
 // ============================================
-// Вкладка «Ключевая ставка»
+// Вкладка «Доллар» — курс USD/RUB с MOEX
 // ============================================
-async function renderKeyRateChart() {
-  const canvasEl = document.getElementById('rateChart');
-  const statusEl = document.getElementById('rateStatus');
-  statusEl.textContent = 'Загрузка...';
+let dollarChartInstance = null;
+
+async function loadDollarHistory(days) {
+  const from = new Date();
+  from.setDate(from.getDate() - days);
+  const fromStr = from.toISOString().slice(0, 10);
+
+  const baseUrl = `https://iss.moex.com/iss/history/engines/currency/markets/selt/boards/CETS/securities/USD000UTSTOM.json`;
+
+  let allRows = [];
+  let columns = null;
+  let start = 0;
+  const PAGE = 100;
+
+  while (true) {
+    const url = `${baseUrl}?from=${fromStr}&start=${start}`;
+    const data = await fetchViaProxy(url);
+
+    if (!data.history || !data.history.data) break;
+
+    if (!columns) columns = data.history.columns;
+    const rows = data.history.data;
+
+    allRows = allRows.concat(rows);
+
+    if (rows.length < PAGE) break;
+
+    start += PAGE;
+    if (start > 10000) break;
+  }
+
+  if (!columns) throw new Error('Нет данных');
+
+  const closeIdx = columns.indexOf('CLOSE');
+  const dateIdx = columns.indexOf('TRADEDATE');
+
+  allRows.sort((a, b) => {
+    const da = a[dateIdx];
+    const db = b[dateIdx];
+    if (da < db) return -1;
+    if (da > db) return 1;
+    return 0;
+  });
+
+  const labels = allRows.map(r => r[dateIdx]);
+  const values = allRows.map(r => r[closeIdx]).filter(v => v !== null);
+
+  return { labels, values };
+}
+
+async function renderDollarChart(days) {
+  const statusEl = document.getElementById('dollarStatus');
+  const canvasEl = document.getElementById('dollarChart');
+  statusEl.textContent = `Загрузка за ${days} дн...`;
 
   try {
-    // Показываем заглушку — источник ЦБ блокирует запросы Cloudflare
-    throw new Error('Источник ЦБ временно недоступен');
+    const { labels, values } = await loadDollarHistory(days);
+    if (values.length === 0) throw new Error('Нет данных за период');
+
+    const ctx = canvasEl.getContext('2d');
+    if (dollarChartInstance) dollarChartInstance.destroy();
+
+    dollarChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'USD/RUB',
+          data: values,
+          borderColor: '#26a269',
+          backgroundColor: 'rgba(38, 162, 105, 0.15)',
+          fill: true,
+          tension: 0.25,
+          pointRadius: 0,
+          borderWidth: 2,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+        scales: {
+          x: { display: false },
+          y: {
+            grid: { color: 'rgba(128,128,128,0.15)' },
+            ticks: { color: tg.themeParams?.hint_color || '#888', font: { size: 10 } }
+          }
+        }
+      }
+    });
+
+    const last = values[values.length - 1];
+    statusEl.textContent = `Текущий курс: ${last.toFixed(4)} ₽`;
   } catch (e) {
-    statusEl.textContent = 'Данные ЦБ РФ обновляются после каждого заседания совета директоров. Источник: cbr.ru';
+    console.error('Ошибка курса доллара:', e);
+    statusEl.textContent = 'Ошибка: ' + e.message;
   }
 }
 
+// Кнопки периодов для доллара
+document.querySelectorAll('#dollarPeriods .period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#dollarPeriods .period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderDollarChart(parseInt(btn.dataset.days, 10));
+  });
+});
+
 // ============================================
-// Вкладка «Инфляция»
+// Вкладка «Крипта» — BTC + TON + ETH через CoinGecko
 // ============================================
-async function renderInflationChart() {
-  const canvasEl = document.getElementById('inflationChart');
-  const statusEl = document.getElementById('inflationStatus');
-  statusEl.textContent = 'Загрузка...';
+let cryptoChartInstance = null;
+
+async function loadCryptoHistory(coinId, days) {
+  // CoinGecko: доступны только 1, 7, 14, 30, 90, 180, 365
+  const allowed = [1, 7, 14, 30, 90, 180, 365];
+  let daysParam = 365;
+  for (const d of allowed) {
+    if (days <= d) { daysParam = d; break; }
+  }
+
+  const url = `https://api.coingecko.com/api/v3/coins/${coinId}/ohlc?vs_currency=usd&days=${daysParam}`;
+  const data = await fetchViaProxy(url);
+
+  if (!Array.isArray(data)) throw new Error('Неверный формат данных');
+
+  // Формат: [timestamp, open, high, low, close]
+  const labels = data.map(row => {
+    const d = new Date(row[0]);
+    return d.toISOString().slice(0, 10);
+  });
+  const values = data.map(row => row[4]);
+
+  return { labels, values };
+}
+
+async function renderCryptoChart(days) {
+  const statusEl = document.getElementById('cryptoStatus');
+  const canvasEl = document.getElementById('cryptoChart');
+  statusEl.textContent = `Загрузка за ${days} дн...`;
 
   try {
-    // Показываем заглушку — ЕМИСС блокирует запросы Cloudflare
-    throw new Error('Источник Росстата временно недоступен');
+    const [btc, ton, eth] = await Promise.all([
+      loadCryptoHistory('bitcoin', days),
+      loadCryptoHistory('the-open-network', days),
+      loadCryptoHistory('ethereum', days),
+    ]);
+
+    const ctx = canvasEl.getContext('2d');
+    if (cryptoChartInstance) cryptoChartInstance.destroy();
+
+    cryptoChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: btc.labels,
+        datasets: [
+          {
+            label: 'BTC',
+            data: btc.values,
+            borderColor: '#f2a900',
+            backgroundColor: 'rgba(242, 169, 0, 0.05)',
+            fill: false,
+            tension: 0.25,
+            pointRadius: 0,
+            borderWidth: 2,
+          },
+          {
+            label: 'TON',
+            data: ton.values,
+            borderColor: '#2481cc',
+            backgroundColor: 'rgba(36, 129, 204, 0.05)',
+            fill: false,
+            tension: 0.25,
+            pointRadius: 0,
+            borderWidth: 2,
+          },
+          {
+            label: 'ETH',
+            data: eth.values,
+            borderColor: '#8b5cf6',
+            backgroundColor: 'rgba(139, 92, 246, 0.05)',
+            fill: false,
+            tension: 0.25,
+            pointRadius: 0,
+            borderWidth: 2,
+          },
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            labels: {
+              color: tg.themeParams?.text_color || '#000',
+              font: { size: 11 },
+            }
+          },
+          tooltip: { mode: 'index', intersect: false },
+        },
+        scales: {
+          x: { display: false },
+          y: {
+            grid: { color: 'rgba(128,128,128,0.15)' },
+            ticks: { color: tg.themeParams?.hint_color || '#888', font: { size: 10 } }
+          }
+        }
+      }
+    });
+
+    statusEl.textContent = 'BTC (жёлтый) • TON (синий) • ETH (фиолетовый)';
   } catch (e) {
-    statusEl.textContent = 'Данные Росстата обновляются ежемесячно. Источник: fedstat.ru';
+    console.error('Ошибка крипты:', e);
+    statusEl.textContent = 'Ошибка: ' + e.message;
   }
 }
+
+// Кнопки периодов для крипты
+document.querySelectorAll('#cryptoPeriods .period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#cryptoPeriods .period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderCryptoChart(parseInt(btn.dataset.days, 10));
+  });
+});
 
 // ============================================
 // Старт
