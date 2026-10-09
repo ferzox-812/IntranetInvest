@@ -50,6 +50,14 @@ function switchTab(name) {
     window.__bondsLoaded = true;
     renderBondsList();
   }
+  if (name === 'rate' && !window.__rateLoaded) {
+    window.__rateLoaded = true;
+    renderKeyRateChart();
+  }
+  if (name === 'inflation' && !window.__inflationLoaded) {
+    window.__inflationLoaded = true;
+    renderInflationChart();
+  }
 }
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -166,13 +174,11 @@ async function renderBondsList() {
       };
     }).filter(b => b.last != null && b.turnover > 0);
 
-    // Топ-10 ОФЗ (тикеры начинаются с SU)
     const ofz = allBonds
       .filter(b => b.ticker.startsWith('SU'))
       .sort((a, b) => b.turnover - a.turnover)
       .slice(0, 10);
 
-    // Топ-20 корпоративных
     const corporate = allBonds
       .filter(b => !b.ticker.startsWith('SU'))
       .sort((a, b) => b.turnover - a.turnover)
@@ -391,6 +397,38 @@ async function renderChart(target, secid, days) {
   } catch (e) {
     console.error('Ошибка графика:', e);
     statusEl.textContent = 'Ошибка: ' + e.message;
+  }
+}
+
+// ============================================
+// Вкладка «Ключевая ставка»
+// ============================================
+async function renderKeyRateChart() {
+  const canvasEl = document.getElementById('rateChart');
+  const statusEl = document.getElementById('rateStatus');
+  statusEl.textContent = 'Загрузка...';
+
+  try {
+    // Показываем заглушку — источник ЦБ блокирует запросы Cloudflare
+    throw new Error('Источник ЦБ временно недоступен');
+  } catch (e) {
+    statusEl.textContent = 'Данные ЦБ РФ обновляются после каждого заседания совета директоров. Источник: cbr.ru';
+  }
+}
+
+// ============================================
+// Вкладка «Инфляция»
+// ============================================
+async function renderInflationChart() {
+  const canvasEl = document.getElementById('inflationChart');
+  const statusEl = document.getElementById('inflationStatus');
+  statusEl.textContent = 'Загрузка...';
+
+  try {
+    // Показываем заглушку — ЕМИСС блокирует запросы Cloudflare
+    throw new Error('Источник Росстата временно недоступен');
+  } catch (e) {
+    statusEl.textContent = 'Данные Росстата обновляются ежемесячно. Источник: fedstat.ru';
   }
 }
 
