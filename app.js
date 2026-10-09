@@ -4,7 +4,6 @@
 
 const PROXY = 'https://intranetinvest-proxy-v2.romaievlev618.workers.dev';
 
-// Инициализация Telegram
 const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
@@ -39,10 +38,9 @@ function switchTab(name) {
 
   document.getElementById('pageSubtitle').textContent = SUBTITLES[name] || '';
 
-  // Ленивая загрузка данных при первом открытии вкладки
   if (name === 'index' && !window.__imoexLoaded) {
     window.__imoexLoaded = true;
-    renderIMOEXChart();
+    renderIMOEXChart(365);
   }
   if (name === 'stocks' && !window.__stocksLoaded) {
     window.__stocksLoaded = true;
@@ -60,7 +58,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 async function renderStocksList() {
   const listEl = document.getElementById('stocksList');
   try {
-    // Берём все акции с основного режима TQBR
     const url = 'https://iss.moex.com/iss/engines/stock/markets/shares/boards/TQBR/securities.json?iss.meta=off&iss.only=securities,marketdata';
     const data = await fetchViaProxy(url);
 
@@ -69,14 +66,12 @@ async function renderStocksList() {
     const mdCols = data.marketdata.columns;
     const mdRows = data.marketdata.data;
 
-    // Индексы нужных колонок
     const iSecId = secCols.indexOf('SECID');
     const iShortName = secCols.indexOf('SHORTNAME');
     const iPrev = mdCols.indexOf('PREVPRICE');
     const iLast = mdCols.indexOf('LAST');
     const iValToday = mdCols.indexOf('VALTODAY');
 
-    // Собираем объекты и сортируем по обороту за день
     const stocks = secRows.map((row, i) => {
       const md = mdRows[i] || [];
       const last = md[iLast];
@@ -95,7 +90,6 @@ async function renderStocksList() {
     .sort((a, b) => b.turnover - a.turnover)
     .slice(0, 100);
 
-    // Рендер
     listEl.innerHTML = stocks.map(s => {
       const changeClass = s.change > 0 ? 'up' : (s.change < 0 ? 'down' : '');
       const changeText = s.change != null
@@ -120,10 +114,16 @@ async function renderStocksList() {
 }
 
 // ============================================
-// Вкладка «Индекс» — график IMOEX
+// Вкладка «Индекс» — график IMOEX с периодами
 // ============================================
-async function loadIMOEX() {
-  const url = 'https://iss.moex.com/iss/history/engines/stock/markets/index/securities/IMOEX.json?from=2024-01-01';
+let imoexChartInstance = null;
+
+async function loadIMOEX(days) {
+  const from = new Date();
+  from.setDate(from.getDate() - days);
+  const fromStr = from.toISOString().slice(0, 10);
+
+  const url = `https://iss.moex.com/iss/history/engines/stock/markets/index/securities/IMOEX.json?from=${fromStr}`;
   const data = await fetchViaProxy(url);
 
   const { columns, data: rows } = data.history;
@@ -137,16 +137,20 @@ async function loadIMOEX() {
   return { labels, values };
 }
 
-async function renderIMOEXChart() {
+async function renderIMOEXChart(days) {
   const statusEl = document.getElementById('chartStatus');
   statusEl.textContent = 'Загрузка данных...';
 
   try {
-    const { labels, values } = await loadIMOEX();
-    if (values.length === 0) throw new Error('Пустой массив данных');
+    const { labels, values } = await loadIMOEX(days);
+    if (values.length === 0) throw new Error('Нет данных за период');
 
     const ctx = document.getElementById('imoexChart').getContext('2d');
-    new Chart(ctx, {
+
+    // Пересоздаём график (Chart.js не любит менять данные на лету с разной длиной)
+    if (imoexChartInstance) imoexChartInstance.destroy();
+
+    imoexChartInstance = new Chart(ctx, {
       type: 'line',
       data: {
         labels,
@@ -193,7 +197,16 @@ async function renderIMOEXChart() {
   }
 }
 
+// Кнопки периодов
+document.querySelectorAll('#indexPeriods .period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#indexPeriods .period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderIMOEXChart(parseInt(btn.dataset.days, 10));
+  });
+});
+
 // ============================================
-// Старт: открываем вкладку «Индекс» по умолчанию
+// Старт
 // ============================================
 switchTab('index');
