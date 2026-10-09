@@ -9,9 +9,7 @@ html, body {
   min-height: 100vh;
 }
 
-body {
-  padding: 16px 16px 90px; /* место под таб-бар */
-}
+body { padding: 16px 16px 90px; }
 
 header { margin-bottom: 16px; }
 
@@ -27,7 +25,6 @@ h1 {
   opacity: 0.6;
 }
 
-/* --- Карточки и контент --- */
 .card {
   background: var(--tg-theme-secondary-bg-color, #f5f5f5);
   border-radius: 14px;
@@ -45,6 +42,32 @@ canvas {
   opacity: 0.6;
   margin: 8px 0 0;
   text-align: center;
+}
+
+/* --- Переключатель периодов --- */
+.period-switch {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  justify-content: center;
+}
+
+.period-btn {
+  background: transparent;
+  border: 1px solid rgba(128,128,128,0.25);
+  color: var(--tg-theme-text-color, #000);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.period-btn.active {
+  background: var(--tg-theme-button-color, #2481cc);
+  border-color: var(--tg-theme-button-color, #2481cc);
+  color: var(--tg-theme-button-text-color, #fff);
 }
 
 /* --- Список акций --- */
@@ -74,9 +97,7 @@ canvas {
 
 .stock-row:last-child { border-bottom: none; }
 
-.stock-ticker {
-  font-weight: 600;
-}
+.stock-ticker { font-weight: 600; }
 
 .stock-name {
   font-size: 11px;
@@ -126,17 +147,10 @@ canvas {
   transition: color 0.15s;
 }
 
-.tab-btn.active {
-  color: var(--tg-theme-button-color, #2481cc);
-}
+.tab-btn.active { color: var(--tg-theme-button-color, #2481cc); }
 
-.tab-btn .icon {
-  font-size: 18px;
-  line-height: 1;
-}
+.tab-btn .icon { font-size: 18px; line-height: 1; }
 
-.tab-btn .label {
-  font-weight: 500;
-}
+.tab-btn .label { font-weight: 500; }
 
 .hidden { display: none; }
