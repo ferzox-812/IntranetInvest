@@ -76,7 +76,7 @@ canvas {
   color: var(--tg-theme-button-text-color, #fff);
 }
 
-/* --- Список акций --- */
+/* --- Списки --- */
 .list-header,
 .stock-row {
   display: grid;
@@ -87,7 +87,6 @@ canvas {
   font-size: 14px;
 }
 
-/* Отдельная сетка для облигаций — 4 колонки */
 .list-header.bonds-header,
 .bond-row {
   display: grid;
@@ -150,6 +149,19 @@ canvas {
 .bond-coupon {
   color: #2481cc;
   font-weight: 500;
+}
+
+/* --- Бейдж ОФЗ --- */
+.ofz-badge {
+  display: inline-block;
+  background: rgba(36, 129, 204, 0.15);
+  color: #2481cc;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 4px;
+  vertical-align: middle;
+  letter-spacing: 0.3px;
 }
 
 /* --- Экран бумаги --- */
