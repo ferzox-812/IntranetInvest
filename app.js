@@ -351,25 +351,32 @@ document.querySelectorAll('#dollarPeriods .period-btn').forEach(btn => {
 });
 
 // ============================================
-// Крипта — CoinGecko с паузой 3 сек
+// Крипта — Kraken API (пауза 3 сек)
 // ============================================
 let cryptoChartInstance = null;
 
-async function loadCryptoHistory(coinId, days) {
-  const allowed = [1, 7, 14, 30, 90, 180, 365];
-  let daysParam = 365;
-  for (const d of allowed) {
-    if (days <= d) { daysParam = d; break; }
-  }
+async function loadCryptoHistory(symbol, days) {
+  const pairMap = {
+    'bitcoin': 'XBTUSD',
+    'the-open-network': 'TONUSD',
+    'ethereum': 'ETHUSD',
+  };
+  const pair = pairMap[symbol] || symbol;
 
-  const url = `https://api.coingecko.com/api/v3/coins/${coinId}/ohlc?vs_currency=usd&days=${daysParam}`;
+  // Kraken OHLC: interval=1440 (1 день), отдаёт до 720 свечей
+  const url = `https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=1440`;
   const data = await fetchJSONViaProxy(url);
 
-  if (!Array.isArray(data)) throw new Error('Неверный формат CoinGecko');
+  if (!data.result) throw new Error('Неверный формат Kraken');
 
-  // Формат: [timestamp, open, high, low, close]
-  const labels = data.map(row => new Date(row[0]).toISOString().slice(0, 10));
-  const values = data.map(row => row[4]);
+  const resultKey = Object.keys(data.result).find(k => k !== 'last');
+  if (!resultKey) throw new Error('Нет данных Kraken');
+
+  const candles = data.result[resultKey];
+  const recent = candles.slice(-days);
+
+  const labels = recent.map(c => new Date(c[0] * 1000).toISOString().slice(0, 10));
+  const values = recent.map(c => parseFloat(c[4])); // close
 
   return { labels, values };
 }
