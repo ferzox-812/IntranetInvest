@@ -1,16 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IntranetInvest</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>IntranetInvest</h1>
-  <p>Здесь будет график Индекса Мосбиржи</p>
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
-  </script>
+  <header>
+    <h1>IntranetInvest</h1>
+    <p class="subtitle">Индекс Мосбиржи</p>
+  </header>
+
+  <main>
+    <div class="card">
+      <canvas id="imoexChart"></canvas>
+      <p id="chartStatus" class="status">Загрузка данных...</p>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
