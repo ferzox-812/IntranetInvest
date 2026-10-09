@@ -19,6 +19,12 @@ h1 {
   font-weight: 600;
 }
 
+h2 {
+  font-size: 20px;
+  margin: 8px 0 4px;
+  font-weight: 600;
+}
+
 .subtitle {
   margin: 0;
   font-size: 13px;
@@ -93,8 +99,14 @@ canvas {
 
 .stock-row {
   border-bottom: 1px solid rgba(128,128,128,0.08);
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: 8px;
+  padding: 10px 4px;
+  margin: 0 -4px;
 }
 
+.stock-row:active { background: rgba(128,128,128,0.1); }
 .stock-row:last-child { border-bottom: none; }
 
 .stock-ticker { font-weight: 600; }
@@ -118,6 +130,30 @@ canvas {
 
 .stock-change.up { color: #26a269; }
 .stock-change.down { color: #e01b24; }
+
+/* --- Экран акции --- */
+.stock-view {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--tg-theme-bg-color, #fff);
+  padding: 16px 16px 90px;
+  overflow-y: auto;
+  z-index: 200;
+}
+
+.back-btn {
+  background: transparent;
+  border: none;
+  color: var(--tg-theme-button-color, #2481cc);
+  font-size: 15px;
+  padding: 8px 0;
+  cursor: pointer;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
 
 /* --- Нижняя таб-панель --- */
 .tabbar {
