@@ -276,48 +276,27 @@ async function renderChart(target, secid, days) {
 }
 
 // ============================================
-// Доллар — ЦБ РФ (через TextDecoder windows-1251)
+// Доллар — Frankfurter API (бесплатный, без ключа)
 // ============================================
 let dollarChartInstance = null;
-
-function parseCBRXml(xmlText) {
-  const labels = [], values = [];
-  const matches = xmlText.match(/<Record[^>]*>/g);
-  if (!matches) return { labels, values };
-  for (const tag of matches) {
-    const dateMatch = tag.match(/Date="([^"]+)"/);
-    const valueMatch = tag.match(/Value="([^"]+)"/);
-    if (dateMatch && valueMatch) {
-      const val = parseFloat(valueMatch[1].replace(',', '.'));
-      if (!isNaN(val)) {
-        const [d, m, y] = dateMatch[1].split('.');
-        labels.push(`${y}-${m}-${d}`);
-        values.push(val);
-      }
-    }
-  }
-  return { labels, values };
-}
 
 async function loadDollarHistory(days) {
   const end = new Date();
   const start = new Date();
   start.setDate(start.getDate() - days);
-  const fmt = (d) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-  const url = `https://www.cbr.ru/scripts/XML_dynamic.asp?date_req1=${fmt(start)}&date_req2=${fmt(end)}&VAL_NM_RQ=R01235`;
+  const fmt = (d) => d.toISOString().slice(0, 10);
 
-  const response = await fetch(`${PROXY}?url=${encodeURIComponent(url)}`);
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const buffer = await response.arrayBuffer();
-  const decoder = new TextDecoder('windows-1251');
-  const xmlText = decoder.decode(buffer);
+  const url = `https://api.frankfurter.dev/v2/rates?base=USD&quotes=RUB&from=${fmt(start)}&to=${fmt(end)}`;
+  const data = await fetchJSONViaProxy(url);
 
-  const { labels, values } = parseCBRXml(xmlText);
-  if (values.length === 0) throw new Error('ЦБ не вернул данные');
+  if (!Array.isArray(data)) throw new Error('Неверный формат Frankfurter');
+  const sorted = data.slice().sort((a, b) => a.date.localeCompare(b.date));
 
-  const combined = labels.map((d, i) => ({ d, v: values[i] }));
-  combined.sort((a, b) => a.d.localeCompare(b.d));
-  return { labels: combined.map(x => x.d), values: combined.map(x => x.v) };
+  const labels = sorted.map(row => row.date);
+  const values = sorted.map(row => row.rate);
+
+  if (values.length === 0) throw new Error('Frankfurter не вернул данные');
+  return { labels, values };
 }
 
 async function renderDollarChart(days) {
@@ -356,7 +335,7 @@ async function renderDollarChart(days) {
       }
     });
 
-    statusEl.textContent = `Курс ЦБ РФ: ${values[values.length - 1].toFixed(4)} ₽`;
+    statusEl.textContent = `Курс USD/RUB: ${values[values.length - 1].toFixed(4)} ₽`;
   } catch (e) {
     console.error(e);
     statusEl.textContent = 'Ошибка: ' + e.message;
@@ -372,22 +351,24 @@ document.querySelectorAll('#dollarPeriods .period-btn').forEach(btn => {
 });
 
 // ============================================
-// Крипта — CoinGecko (задержка 5 сек)
+// Крипта — CoinCap API (без 429)
 // ============================================
 let cryptoChartInstance = null;
 
 async function loadCryptoHistory(coinId, days) {
-  const allowed = [1, 7, 14, 30, 90, 180, 365];
-  let daysParam = 365;
-  for (const d of allowed) {
-    if (days <= d) { daysParam = d; break; }
-  }
-  const url = `https://api.coingecko.com/api/v3/coins/${coinId}/ohlc?vs_currency=usd&days=${daysParam}`;
-  const data = await fetchJSONViaProxy(url);
-  if (!Array.isArray(data)) throw new Error('Неверный формат CoinGecko');
+  const limit = Math.min(days, 365);
+  const coinMap = { 'bitcoin': 'bitcoin', 'the-open-network': 'toncoin', 'ethereum': 'ethereum' };
+  const capId = coinMap[coinId] || coinId;
 
-  const labels = data.map(row => new Date(row[0]).toISOString().slice(0, 10));
-  const values = data.map(row => row[4]);
+  const url = `https://api.coincap.io/v2/assets/${capId}/history?interval=d1&limit=${limit}`;
+  const data = await fetchJSONViaProxy(url);
+
+  if (!data.data || !Array.isArray(data.data)) throw new Error('Неверный формат CoinCap');
+  const sorted = data.data.slice().sort((a, b) => a.time - b.time);
+
+  const labels = sorted.map(row => new Date(row.time).toISOString().slice(0, 10));
+  const values = sorted.map(row => parseFloat(row.priceUsd));
+
   return { labels, values };
 }
 
@@ -399,12 +380,12 @@ async function renderCryptoChart(days) {
   try {
     statusEl.textContent = 'Загрузка BTC...';
     const btc = await loadCryptoHistory('bitcoin', days);
-
-    await new Promise(r => setTimeout(r, 5000));
+    await new Promise(r => setTimeout(r, 500));
+    
     statusEl.textContent = 'Загрузка TON...';
     const ton = await loadCryptoHistory('the-open-network', days);
-
-    await new Promise(r => setTimeout(r, 5000));
+    await new Promise(r => setTimeout(r, 500));
+    
     statusEl.textContent = 'Загрузка ETH...';
     const eth = await loadCryptoHistory('ethereum', days);
 
