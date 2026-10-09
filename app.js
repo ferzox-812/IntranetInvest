@@ -124,7 +124,7 @@ async function renderStocksList() {
 }
 
 // ============================================
-// Вкладка «Облигации» — топ-30
+// Вкладка «Облигации» — топ-10 ОФЗ + топ-20 корпоративных
 // ============================================
 async function renderBondsList() {
   const listEl = document.getElementById('bondsList');
@@ -146,7 +146,7 @@ async function renderBondsList() {
     const iValToday = mdCols.indexOf('VALTODAY');
     const iYield = mdCols.indexOf('YIELDATPREVWAPRICE');
 
-    const bonds = secRows.map((row, i) => {
+    const allBonds = secRows.map((row, i) => {
       const md = mdRows[i] || [];
       const last = md[iLast];
       const prev = md[iPrev];
@@ -164,19 +164,33 @@ async function renderBondsList() {
         turnover,
         change,
       };
-    })
-    .filter(b => b.last != null && b.turnover > 0)
-    .sort((a, b) => b.turnover - a.turnover)
-    .slice(0, 30);
+    }).filter(b => b.last != null && b.turnover > 0);
+
+    // Топ-10 ОФЗ (тикеры начинаются с SU)
+    const ofz = allBonds
+      .filter(b => b.ticker.startsWith('SU'))
+      .sort((a, b) => b.turnover - a.turnover)
+      .slice(0, 10);
+
+    // Топ-20 корпоративных
+    const corporate = allBonds
+      .filter(b => !b.ticker.startsWith('SU'))
+      .sort((a, b) => b.turnover - a.turnover)
+      .slice(0, 20);
+
+    const bonds = [...ofz, ...corporate];
 
     listEl.innerHTML = bonds.map(b => {
+      const isOfz = b.ticker.startsWith('SU');
       const couponText = b.coupon != null ? b.coupon.toFixed(2) : '—';
       const priceText = b.last != null ? b.last.toFixed(2) : '—';
       const yieldText = b.yieldVal != null ? b.yieldVal.toFixed(2) : '—';
       return `
         <div class="bond-row" data-ticker="${b.ticker}" data-name="${b.name || ''}" data-type="bond">
           <div>
-            <div class="stock-ticker">${b.ticker}</div>
+            <div class="stock-ticker">
+              ${isOfz ? '<span class="ofz-badge">ОФЗ</span> ' : ''}${b.ticker}
+            </div>
             <div class="stock-name">${b.name || ''}</div>
           </div>
           <div class="bond-cell bond-coupon">${couponText}%</div>
@@ -310,7 +324,6 @@ async function loadHistory(target, secid, days) {
 
 // ============================================
 // Универсальная отрисовка графика
-// target: 'index' | 'stock' | 'bond'
 // ============================================
 async function renderChart(target, secid, days) {
   const statusEl = document.getElementById(target === 'index' ? 'chartStatus' : 'stockChartStatus');
