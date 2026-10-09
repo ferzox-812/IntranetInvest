@@ -16,20 +16,36 @@
 
   <main id="content">
 
+    <!-- Вкладка: Акции -->
     <section class="tab hidden" data-tab="stocks">
       <div class="card">
-        <div class="list-header"><span>Тикер</span><span>Цена</span><span>Δ</span></div>
-        <div id="stocksList" class="list"><p class="status">Загрузка акций...</p></div>
+        <div class="list-header">
+          <span>Тикер</span>
+          <span>Цена</span>
+          <span>Δ</span>
+        </div>
+        <div id="stocksList" class="list">
+          <p class="status">Загрузка акций...</p>
+        </div>
       </div>
     </section>
 
+    <!-- Вкладка: Облигации -->
     <section class="tab hidden" data-tab="bonds">
       <div class="card">
-        <div class="list-header bonds-header"><span>Тикер</span><span>Купон</span><span>Цена</span><span>Доходн.</span></div>
-        <div id="bondsList" class="list"><p class="status">Загрузка облигаций...</p></div>
+        <div class="list-header bonds-header">
+          <span>Тикер</span>
+          <span>Купон</span>
+          <span>Цена</span>
+          <span>Доходн.</span>
+        </div>
+        <div id="bondsList" class="list">
+          <p class="status">Загрузка облигаций...</p>
+        </div>
       </div>
     </section>
 
+    <!-- Вкладка: Индекс -->
     <section class="tab" data-tab="index">
       <div class="card">
         <div class="period-switch" id="indexPeriods">
@@ -43,6 +59,7 @@
       </div>
     </section>
 
+    <!-- Вкладка: Доллар -->
     <section class="tab hidden" data-tab="dollar">
       <div class="card">
         <div class="period-switch" id="dollarPeriods">
@@ -55,6 +72,7 @@
       </div>
     </section>
 
+    <!-- Вкладка: Крипта -->
     <section class="tab hidden" data-tab="crypto">
       <div class="card">
         <div class="period-switch" id="cryptoPeriods">
@@ -62,15 +80,33 @@
           <button class="period-btn" data-days="180">6М</button>
           <button class="period-btn active" data-days="365">1Г</button>
         </div>
-        <canvas id="cryptoChart"></canvas>
-        <p id="cryptoStatus" class="status">Загрузка...</p>
+      </div>
+
+      <div class="card">
+        <h3 style="margin: 0 0 8px; font-size: 15px;">Bitcoin (BTC)</h3>
+        <canvas id="btcChart"></canvas>
+        <p id="btcStatus" class="status">Загрузка...</p>
+      </div>
+
+      <div class="card">
+        <h3 style="margin: 0 0 8px; font-size: 15px;">Toncoin (TON)</h3>
+        <canvas id="tonChart"></canvas>
+        <p id="tonStatus" class="status">Загрузка...</p>
+      </div>
+
+      <div class="card">
+        <h3 style="margin: 0 0 8px; font-size: 15px;">Ethereum (ETH)</h3>
+        <canvas id="ethChart"></canvas>
+        <p id="ethStatus" class="status">Загрузка...</p>
       </div>
     </section>
 
+    <!-- Экран конкретной бумаги -->
     <section id="stockView" class="stock-view hidden">
       <button id="stockBack" class="back-btn">← Назад</button>
       <h2 id="stockTitle">—</h2>
       <p id="stockSubtitle" class="subtitle">—</p>
+
       <div class="card">
         <div class="period-switch" id="stockPeriods">
           <button class="period-btn" data-days="30">1М</button>
@@ -86,11 +122,26 @@
   </main>
 
   <nav class="tabbar">
-    <button class="tab-btn" data-target="stocks"><span class="icon">📈</span><span class="label">Акции</span></button>
-    <button class="tab-btn" data-target="bonds"><span class="icon">💰</span><span class="label">Облигации</span></button>
-    <button class="tab-btn active" data-target="index"><span class="icon">📊</span><span class="label">Индекс</span></button>
-    <button class="tab-btn" data-target="dollar"><span class="icon">💵</span><span class="label">Доллар</span></button>
-    <button class="tab-btn" data-target="crypto"><span class="icon">🪙</span><span class="label">Крипта</span></button>
+    <button class="tab-btn" data-target="stocks">
+      <span class="icon">📈</span>
+      <span class="label">Акции</span>
+    </button>
+    <button class="tab-btn" data-target="bonds">
+      <span class="icon">💰</span>
+      <span class="label">Облигации</span>
+    </button>
+    <button class="tab-btn active" data-target="index">
+      <span class="icon">📊</span>
+      <span class="label">Индекс</span>
+    </button>
+    <button class="tab-btn" data-target="dollar">
+      <span class="icon">💵</span>
+      <span class="label">Доллар</span>
+    </button>
+    <button class="tab-btn" data-target="crypto">
+      <span class="icon">🪙</span>
+      <span class="label">Крипта</span>
+    </button>
   </nav>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
