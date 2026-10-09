@@ -65,6 +65,24 @@
       </div>
     </section>
 
+    <!-- Экран конкретной акции (открывается поверх табов) -->
+    <section id="stockView" class="stock-view hidden">
+      <button id="stockBack" class="back-btn">← Назад</button>
+      <h2 id="stockTitle">—</h2>
+      <p id="stockSubtitle" class="subtitle">—</p>
+
+      <div class="card">
+        <div class="period-switch" id="stockPeriods">
+          <button class="period-btn" data-days="30">1М</button>
+          <button class="period-btn" data-days="180">6М</button>
+          <button class="period-btn active" data-days="365">1Г</button>
+          <button class="period-btn" data-days="1825">5Л</button>
+        </div>
+        <canvas id="stockChart"></canvas>
+        <p id="stockChartStatus" class="status">Загрузка данных...</p>
+      </div>
+    </section>
+
   </main>
 
   <nav class="tabbar">
