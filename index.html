@@ -59,19 +59,29 @@
       </div>
     </section>
 
-    <!-- Вкладка: Ставка -->
-    <section class="tab hidden" data-tab="rate">
+    <!-- Вкладка: Доллар -->
+    <section class="tab hidden" data-tab="dollar">
       <div class="card">
-        <canvas id="rateChart"></canvas>
-        <p id="rateStatus" class="status">Загрузка...</p>
+        <div class="period-switch" id="dollarPeriods">
+          <button class="period-btn" data-days="30">1М</button>
+          <button class="period-btn" data-days="180">6М</button>
+          <button class="period-btn active" data-days="365">1Г</button>
+        </div>
+        <canvas id="dollarChart"></canvas>
+        <p id="dollarStatus" class="status">Загрузка...</p>
       </div>
     </section>
 
-    <!-- Вкладка: Инфляция -->
-    <section class="tab hidden" data-tab="inflation">
+    <!-- Вкладка: Крипта -->
+    <section class="tab hidden" data-tab="crypto">
       <div class="card">
-        <canvas id="inflationChart"></canvas>
-        <p id="inflationStatus" class="status">Загрузка...</p>
+        <div class="period-switch" id="cryptoPeriods">
+          <button class="period-btn" data-days="30">1М</button>
+          <button class="period-btn" data-days="180">6М</button>
+          <button class="period-btn active" data-days="365">1Г</button>
+        </div>
+        <canvas id="cryptoChart"></canvas>
+        <p id="cryptoStatus" class="status">Загрузка...</p>
       </div>
     </section>
 
@@ -108,13 +118,13 @@
       <span class="icon">📊</span>
       <span class="label">Индекс</span>
     </button>
-    <button class="tab-btn" data-target="rate">
-      <span class="icon">🏦</span>
-      <span class="label">Ставка</span>
+    <button class="tab-btn" data-target="dollar">
+      <span class="icon">💵</span>
+      <span class="label">Доллар</span>
     </button>
-    <button class="tab-btn" data-target="inflation">
-      <span class="icon">📉</span>
-      <span class="label">Инфляция</span>
+    <button class="tab-btn" data-target="crypto">
+      <span class="icon">🪙</span>
+      <span class="label">Крипта</span>
     </button>
   </nav>
 
