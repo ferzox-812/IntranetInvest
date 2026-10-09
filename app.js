@@ -1,240 +1,192 @@
-// ============================================
-// IntranetInvest — фронтенд
-// ============================================
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-const PROXY = 'https://intranetinvest-proxy-v2.romaievlev618.workers.dev';
-
-const tg = window.Telegram.WebApp;
-tg.ready();
-tg.expand();
-
-// ============================================
-// Прокси-запрос
-// ============================================
-async function fetchViaProxy(targetUrl) {
-  const url = `${PROXY}?url=${encodeURIComponent(targetUrl)}`;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return response.json();
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--tg-theme-bg-color, #ffffff);
+  color: var(--tg-theme-text-color, #000000);
+  min-height: 100vh;
 }
 
-// ============================================
-// Навигация по табам
-// ============================================
-const SUBTITLES = {
-  stocks: 'Акции',
-  bonds: 'Облигации',
-  index: 'Индекс Мосбиржи',
-  rate: 'Ключевая ставка',
-  inflation: 'Инфляция',
-};
+body { padding: 16px 16px 90px; }
 
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach(el => el.classList.add('hidden'));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+header { margin-bottom: 16px; }
 
-  document.querySelector(`.tab[data-tab="${name}"]`)?.classList.remove('hidden');
-  document.querySelector(`.tab-btn[data-target="${name}"]`)?.classList.add('active');
-
-  document.getElementById('pageSubtitle').textContent = SUBTITLES[name] || '';
-
-  if (name === 'index' && !window.__imoexLoaded) {
-    window.__imoexLoaded = true;
-    renderIMOEXChart(365);
-  }
-  if (name === 'stocks' && !window.__stocksLoaded) {
-    window.__stocksLoaded = true;
-    renderStocksList();
-  }
+h1 {
+  font-size: 22px;
+  margin: 0 0 4px;
+  font-weight: 600;
 }
 
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => switchTab(btn.dataset.target));
-});
-
-// ============================================
-// Вкладка «Акции» — топ-100
-// ============================================
-async function renderStocksList() {
-  const listEl = document.getElementById('stocksList');
-  try {
-    const url = 'https://iss.moex.com/iss/engines/stock/markets/shares/boards/TQBR/securities.json?iss.meta=off&iss.only=securities,marketdata';
-    const data = await fetchViaProxy(url);
-
-    const secCols = data.securities.columns;
-    const secRows = data.securities.data;
-    const mdCols = data.marketdata.columns;
-    const mdRows = data.marketdata.data;
-
-    const iSecId = secCols.indexOf('SECID');
-    const iShortName = secCols.indexOf('SHORTNAME');
-    const iPrev = mdCols.indexOf('PREVPRICE');
-    const iLast = mdCols.indexOf('LAST');
-    const iValToday = mdCols.indexOf('VALTODAY');
-
-    const stocks = secRows.map((row, i) => {
-      const md = mdRows[i] || [];
-      const last = md[iLast];
-      const prev = md[iPrev];
-      const turnover = md[iValToday] || 0;
-      const change = (last && prev) ? ((last - prev) / prev * 100) : null;
-      return {
-        ticker: row[iSecId],
-        name: row[iShortName],
-        last,
-        change,
-        turnover,
-      };
-    })
-    .filter(s => s.last != null && s.turnover > 0)
-    .sort((a, b) => b.turnover - a.turnover)
-    .slice(0, 100);
-
-    listEl.innerHTML = stocks.map(s => {
-      const changeClass = s.change > 0 ? 'up' : (s.change < 0 ? 'down' : '');
-      const changeText = s.change != null
-        ? `${s.change > 0 ? '+' : ''}${s.change.toFixed(2)}%`
-        : '—';
-      return `
-        <div class="stock-row">
-          <div>
-            <div class="stock-ticker">${s.ticker}</div>
-            <div class="stock-name">${s.name || ''}</div>
-          </div>
-          <div class="stock-price">${s.last.toFixed(2)}</div>
-          <div class="stock-change ${changeClass}">${changeText}</div>
-        </div>
-      `;
-    }).join('');
-
-  } catch (e) {
-    console.error(e);
-    listEl.innerHTML = `<p class="status">Ошибка загрузки: ${e.message}</p>`;
-  }
+h2 {
+  font-size: 20px;
+  margin: 8px 0 4px;
+  font-weight: 600;
 }
 
-// ============================================
-// Вкладка «Индекс» — график IMOEX с периодами
-// ============================================
-let imoexChartInstance = null;
-
-async function loadIMOEX(days) {
-  const from = new Date();
-  from.setDate(from.getDate() - days);
-  const fromStr = from.toISOString().slice(0, 10);
-
-  let allRows = [];
-  let columns = null;
-  let start = 0;
-  const PAGE = 100;
-
-  while (true) {
-    const url = `https://iss.moex.com/iss/history/engines/stock/markets/index/securities/IMOEX.json?from=${fromStr}&start=${start}`;
-    const data = await fetchViaProxy(url);
-
-    if (!data.history || !data.history.data) break;
-
-    if (!columns) columns = data.history.columns;
-    const rows = data.history.data;
-
-    allRows = allRows.concat(rows);
-
-    if (rows.length < PAGE) break;
-
-    start += PAGE;
-    if (start > 10000) break;
-  }
-
-  if (!columns) throw new Error('Нет данных');
-
-  const closeIdx = columns.indexOf('CLOSE');
-  const dateIdx = columns.indexOf('TRADEDATE');
-
-  // Сортируем все строки по дате по возрастанию (старые → новые).
-  // Формат YYYY-MM-DD позволяет сравнивать как строки.
-  allRows.sort((a, b) => {
-    const da = a[dateIdx];
-    const db = b[dateIdx];
-    if (da < db) return -1;
-    if (da > db) return 1;
-    return 0;
-  });
-
-  const labels = allRows.map(r => r[dateIdx]);
-  const values = allRows.map(r => r[closeIdx]).filter(v => v !== null);
-
-  return { labels, values };
+.subtitle {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.6;
 }
 
-async function renderIMOEXChart(days) {
-  const statusEl = document.getElementById('chartStatus');
-  statusEl.textContent = `Загрузка данных за ${days} дн...`;
-
-  try {
-    const { labels, values } = await loadIMOEX(days);
-    if (values.length === 0) throw new Error('Нет данных за период');
-
-    const ctx = document.getElementById('imoexChart').getContext('2d');
-
-    if (imoexChartInstance) imoexChartInstance.destroy();
-
-    imoexChartInstance = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'IMOEX',
-          data: values,
-          borderColor: '#2481cc',
-          backgroundColor: 'rgba(36, 129, 204, 0.15)',
-          fill: true,
-          tension: 0.25,
-          pointRadius: 0,
-          borderWidth: 2,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { mode: 'index', intersect: false },
-        },
-        scales: {
-          x: { display: false },
-          y: {
-            grid: { color: 'rgba(128,128,128,0.15)' },
-            ticks: {
-              color: tg.themeParams?.hint_color || '#888',
-              font: { size: 10 },
-            }
-          }
-        }
-      }
-    });
-
-    const last = values[values.length - 1];
-    const first = values[0];
-    const change = ((last - first) / first * 100).toFixed(2);
-    const sign = change > 0 ? '+' : '';
-    statusEl.textContent = `Текущее: ${last.toFixed(2)} • Изменение: ${sign}${change}%`;
-
-  } catch (e) {
-    console.error('Ошибка графика:', e);
-    statusEl.textContent = 'Ошибка: ' + e.message;
-  }
+.card {
+  background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
 }
 
-// Кнопки периодов
-document.querySelectorAll('#indexPeriods .period-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#indexPeriods .period-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    renderIMOEXChart(parseInt(btn.dataset.days, 10));
-  });
-});
+canvas {
+  width: 100% !important;
+  max-height: 260px;
+}
 
-// ============================================
-// Старт
-// ============================================
-switchTab('index');
+.status {
+  font-size: 12px;
+  opacity: 0.6;
+  margin: 8px 0 0;
+  text-align: center;
+}
+
+/* --- Переключатель периодов --- */
+.period-switch {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  justify-content: center;
+}
+
+.period-btn {
+  background: transparent;
+  border: 1px solid rgba(128,128,128,0.25);
+  color: var(--tg-theme-text-color, #000);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.period-btn.active {
+  background: var(--tg-theme-button-color, #2481cc);
+  border-color: var(--tg-theme-button-color, #2481cc);
+  color: var(--tg-theme-button-text-color, #fff);
+}
+
+/* --- Список акций --- */
+.list-header,
+.stock-row {
+  display: grid;
+  grid-template-columns: 1fr auto 70px;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 0;
+  font-size: 14px;
+}
+
+.list-header {
+  font-size: 11px;
+  opacity: 0.5;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(128,128,128,0.15);
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+}
+
+.stock-row {
+  border-bottom: 1px solid rgba(128,128,128,0.08);
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: 8px;
+  padding: 10px 4px;
+  margin: 0 -4px;
+}
+
+.stock-row:active { background: rgba(128,128,128,0.1); }
+.stock-row:last-child { border-bottom: none; }
+
+.stock-ticker { font-weight: 600; }
+
+.stock-name {
+  font-size: 11px;
+  opacity: 0.5;
+  margin-top: 2px;
+}
+
+.stock-price {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-change {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.stock-change.up { color: #26a269; }
+.stock-change.down { color: #e01b24; }
+
+/* --- Экран акции --- */
+.stock-view {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--tg-theme-bg-color, #fff);
+  padding: 16px 16px 90px;
+  overflow-y: auto;
+  z-index: 200;
+}
+
+.back-btn {
+  background: transparent;
+  border: none;
+  color: var(--tg-theme-button-color, #2481cc);
+  font-size: 15px;
+  padding: 8px 0;
+  cursor: pointer;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+/* --- Нижняя таб-панель --- */
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+  border-top: 1px solid rgba(128,128,128,0.15);
+  padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+  z-index: 100;
+}
+
+.tab-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--tg-theme-hint-color, #888);
+  font-size: 10px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.tab-btn.active { color: var(--tg-theme-button-color, #2481cc); }
+
+.tab-btn .icon { font-size: 18px; line-height: 1; }
+
+.tab-btn .label { font-weight: 500; }
+
+.hidden { display: none; }
