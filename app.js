@@ -357,4 +357,153 @@ async function renderDollarChart(days) {
         scales: {
           x: { display: false },
           y: {
-            grid: { color: 'rgba(128,128,128,0.15)'
+            grid: { color: 'rgba(128,128,128,0.15)' },
+            ticks: { color: tg.themeParams?.hint_color || '#888', font: { size: 10 } }
+          }
+        }
+      }
+    });
+
+    statusEl.textContent = `Курс USD/RUB: ${values[values.length - 1].toFixed(4)} ₽`;
+  } catch (e) {
+    console.error(e);
+    statusEl.textContent = 'Ошибка: ' + e.message;
+  }
+}
+
+document.querySelectorAll('#dollarPeriods .period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#dollarPeriods .period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderDollarChart(parseInt(btn.dataset.days, 10));
+  });
+});
+
+// ============================================
+// Крипта — Kraken API (3 отдельных графика)
+// ============================================
+let btcChartInstance = null;
+let tonChartInstance = null;
+let ethChartInstance = null;
+
+async function loadCryptoHistory(symbol, days) {
+  const pairMap = {
+    'bitcoin': 'XBTUSD',
+    'the-open-network': 'TONUSD',
+    'ethereum': 'ETHUSD',
+  };
+  const pair = pairMap[symbol] || symbol;
+
+  const url = `https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=1440`;
+  const data = await fetchJSONViaProxy(url);
+
+  if (!data.result) throw new Error('Неверный формат Kraken');
+
+  const resultKey = Object.keys(data.result).find(k => k !== 'last');
+  if (!resultKey) throw new Error('Нет данных Kraken');
+
+  const candles = data.result[resultKey];
+  const recent = candles.slice(-days);
+
+  const labels = recent.map(c => new Date(c[0] * 1000).toISOString().slice(0, 10));
+  const values = recent.map(c => parseFloat(c[4]));
+
+  return { labels, values };
+}
+
+function drawCryptoChart(canvasId, statusId, data, label, currentInstance) {
+  const statusEl = document.getElementById(statusId);
+  const canvasEl = document.getElementById(canvasId);
+
+  if (currentInstance) currentInstance.destroy();
+
+  const color = getTrendColor(data.values);
+
+  const ctx = canvasEl.getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        label: label,
+        data: data.values,
+        borderColor: color.border,
+        backgroundColor: color.background,
+        fill: true,
+        tension: 0.25,
+        pointRadius: 0,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false },
+      },
+      scales: {
+        x: { display: false },
+        y: {
+          grid: { color: 'rgba(128,128,128,0.15)' },
+          ticks: { color: tg.themeParams?.hint_color || '#888', font: { size: 10 } }
+        }
+      }
+    }
+  });
+
+  const last = data.values[data.values.length - 1];
+  const first = data.values[0];
+  const change = ((last - first) / first * 100).toFixed(2);
+  statusEl.textContent = `$${last.toFixed(2)} • ${change > 0 ? '+' : ''}${change}%`;
+
+  return chart;
+}
+
+async function renderCryptoChart(days) {
+  const btcStatus = document.getElementById('btcStatus');
+  const tonStatus = document.getElementById('tonStatus');
+  const ethStatus = document.getElementById('ethStatus');
+
+  btcStatus.textContent = 'Загрузка...';
+  tonStatus.textContent = 'Ожидание...';
+  ethStatus.textContent = 'Ожидание...';
+
+  try {
+    const btc = await loadCryptoHistory('bitcoin', days);
+    btcChartInstance = drawCryptoChart('btcChart', 'btcStatus', btc, 'BTC', btcChartInstance);
+
+    await new Promise(r => setTimeout(r, 3000));
+
+    tonStatus.textContent = 'Загрузка...';
+    const ton = await loadCryptoHistory('the-open-network', days);
+    tonChartInstance = drawCryptoChart('tonChart', 'tonStatus', ton, 'TON', tonChartInstance);
+
+    await new Promise(r => setTimeout(r, 3000));
+
+    ethStatus.textContent = 'Загрузка...';
+    const eth = await loadCryptoHistory('ethereum', days);
+    ethChartInstance = drawCryptoChart('ethChart', 'ethStatus', eth, 'ETH', ethChartInstance);
+
+  } catch (e) {
+    console.error('Ошибка крипты:', e);
+    [btcStatus, tonStatus, ethStatus].forEach(s => {
+      if (s.textContent.includes('Загрузка') || s.textContent.includes('Ожидание')) {
+        s.textContent = 'Ошибка: ' + e.message;
+      }
+    });
+  }
+}
+
+document.querySelectorAll('#cryptoPeriods .period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#cryptoPeriods .period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderCryptoChart(parseInt(btn.dataset.days, 10));
+  });
+});
+
+// ============================================
+// Старт — главный экран
+// ============================================
+switchTab('home');
