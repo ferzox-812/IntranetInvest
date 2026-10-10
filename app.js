@@ -68,17 +68,14 @@ function switchTab(name) {
   if (name === 'crypto' && !LOADED.crypto) { LOADED.crypto = true; renderCryptoChart({ days: 365 }); }
 }
 
-// Клик по плиткам
 document.querySelectorAll('.home-tile').forEach(tile => {
   tile.addEventListener('click', () => switchTab(tile.dataset.target));
 });
 
-// Клик по рамке "Приобрести криптовалюту"
 document.querySelectorAll('.crypto-buy-banner').forEach(banner => {
   banner.addEventListener('click', () => switchTab(banner.dataset.target));
 });
 
-// Клик по "Назад"
 document.querySelectorAll('.back-btn[data-back]').forEach(btn => {
   btn.addEventListener('click', () => switchTab(btn.dataset.back));
 });
@@ -341,7 +338,7 @@ let eurChartInstance = null;
 let cnyChartInstance = null;
 
 async function loadCurrencyHistory(baseCurrency, period) {
-  const days = period.hours === 24 ? 7 : period.days;
+  const days = period.days;
   const end = new Date();
   const start = new Date();
   start.setDate(start.getDate() - days);
@@ -437,7 +434,7 @@ document.querySelectorAll('#dollarPeriods .period-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#dollarPeriods .period-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    const period = btn.dataset.hours ? { hours: 24 } : { days: parseInt(btn.dataset.days, 10) };
+    const period = { days: parseInt(btn.dataset.days, 10) };
     renderDollarChart(period);
   });
 });
