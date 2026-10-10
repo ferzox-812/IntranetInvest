@@ -129,7 +129,7 @@ function renderStocksRows(stocks) {
   }).join('');
 
   listEl.querySelectorAll('.stock-row').forEach(row => {
-    row.addEventListener('click', () => openStockView(row.dataset.ticker, row.dataset.name, 'stock'));
+    row.addEventListener('click', () => openStockView(row.dataset.ticker, row.dataset.name));
   });
 }
 
@@ -382,7 +382,7 @@ let ethChartInstance = null;
 async function loadCryptoHistory(symbol, period) {
   const pairMap = {
     'bitcoin': 'XBTUSD',
-    'the-open-network': 'TONUSD',
+    'gram': 'TONUSD',
     'ethereum': 'ETHUSD',
   };
   const pair = pairMap[symbol] || symbol;
@@ -467,8 +467,8 @@ async function renderCryptoChart(period) {
     await new Promise(r => setTimeout(r, 1000));
 
     tonStatus.textContent = 'Загрузка...';
-    const ton = await loadCryptoHistory('the-open-network', period);
-    tonChartInstance = drawCryptoChart('tonChart', 'tonStatus', ton, 'TON', tonChartInstance);
+    const gram = await loadCryptoHistory('gram', period);
+    tonChartInstance = drawCryptoChart('tonChart', 'tonStatus', gram, 'GRAM', tonChartInstance);
 
     await new Promise(r => setTimeout(r, 1000));
 
