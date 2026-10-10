@@ -50,7 +50,7 @@ const SUBTITLES = {
   stocks: 'Акции',
   bonds: 'Облигации',
   index: 'Индекс Мосбиржи',
-  dollar: 'Курс доллара',
+  dollar: 'Валюты',
   crypto: 'Криптовалюты',
 };
 
@@ -313,7 +313,6 @@ async function renderChart(target, secid, period) {
   }
 }
 
-// Обработчики периодов: индекс
 document.querySelectorAll('#indexPeriods .period-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#indexPeriods .period-btn').forEach(b => b.classList.remove('active'));
@@ -323,7 +322,6 @@ document.querySelectorAll('#indexPeriods .period-btn').forEach(btn => {
   });
 });
 
-// Обработчики периодов: бумага
 document.querySelectorAll('#stockPeriods .period-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#stockPeriods .period-btn').forEach(b => b.classList.remove('active'));
@@ -336,18 +334,20 @@ document.querySelectorAll('#stockPeriods .period-btn').forEach(btn => {
 });
 
 // ============================================
-// Доллар — Frankfurter API
+// Валюты — USD, EUR, CNY через Frankfurter API
 // ============================================
-let dollarChartInstance = null;
+let usdChartInstance = null;
+let eurChartInstance = null;
+let cnyChartInstance = null;
 
-async function loadDollarHistory(period) {
+async function loadCurrencyHistory(baseCurrency, period) {
   const days = period.hours === 24 ? 7 : period.days;
   const end = new Date();
   const start = new Date();
   start.setDate(start.getDate() - days);
   const fmt = (d) => d.toISOString().slice(0, 10);
 
-  const url = `https://api.frankfurter.dev/v2/rates?base=USD&quotes=RUB&from=${fmt(start)}&to=${fmt(end)}`;
+  const url = `https://api.frankfurter.dev/v2/rates?base=${baseCurrency}&quotes=RUB&from=${fmt(start)}&to=${fmt(end)}`;
   const data = await fetchJSONViaProxy(url);
 
   if (!Array.isArray(data)) throw new Error('Неверный формат Frankfurter');
@@ -360,49 +360,76 @@ async function loadDollarHistory(period) {
   return { labels, values };
 }
 
-async function renderDollarChart(period) {
-  const statusEl = document.getElementById('dollarStatus');
-  const canvasEl = document.getElementById('dollarChart');
-  const label = period.hours ? '24Ч (7 дней)' : `${period.days} дн`;
-  statusEl.textContent = `Загрузка за ${label}...`;
+function drawCurrencyChart(canvasId, statusId, data, label, currentInstance) {
+  const statusEl = document.getElementById(statusId);
+  const canvasEl = document.getElementById(canvasId);
 
-  try {
-    const { labels, values } = await loadDollarHistory(period);
-    if (values.length === 0) throw new Error('Нет данных');
-    const ctx = canvasEl.getContext('2d');
-    if (dollarChartInstance) dollarChartInstance.destroy();
+  if (currentInstance) currentInstance.destroy();
+  const color = getTrendColor(data.values);
 
-    const color = getTrendColor(values);
-
-    dollarChartInstance = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'USD/RUB',
-          data: values,
-          borderColor: color.border,
-          backgroundColor: color.background,
-          fill: true, tension: 0.25, pointRadius: 0, borderWidth: 2,
-        }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
-        scales: {
-          x: { display: false },
-          y: {
-            grid: { color: 'rgba(128,128,128,0.15)' },
-            ticks: { color: tg.themeParams?.hint_color || '#888', font: { size: 10 } }
-          }
+  const ctx = canvasEl.getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        label: label,
+        data: data.values,
+        borderColor: color.border,
+        backgroundColor: color.background,
+        fill: true, tension: 0.25, pointRadius: 0, borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+      scales: {
+        x: { display: false },
+        y: {
+          grid: { color: 'rgba(128,128,128,0.15)' },
+          ticks: { color: tg.themeParams?.hint_color || '#888', font: { size: 10 } }
         }
       }
-    });
+    }
+  });
 
-    statusEl.textContent = `Курс USD/RUB: ${values[values.length - 1].toFixed(4)} ₽`;
+  const last = data.values[data.values.length - 1];
+  statusEl.textContent = `${last.toFixed(4)} ₽`;
+
+  return chart;
+}
+
+async function renderDollarChart(period) {
+  const usdStatus = document.getElementById('usdStatus');
+  const eurStatus = document.getElementById('eurStatus');
+  const cnyStatus = document.getElementById('cnyStatus');
+
+  usdStatus.textContent = 'Загрузка...';
+  eurStatus.textContent = 'Ожидание...';
+  cnyStatus.textContent = 'Ожидание...';
+
+  try {
+    const usd = await loadCurrencyHistory('USD', period);
+    usdChartInstance = drawCurrencyChart('usdChart', 'usdStatus', usd, 'USD/RUB', usdChartInstance);
+
+    await new Promise(r => setTimeout(r, 500));
+
+    eurStatus.textContent = 'Загрузка...';
+    const eur = await loadCurrencyHistory('EUR', period);
+    eurChartInstance = drawCurrencyChart('eurChart', 'eurStatus', eur, 'EUR/RUB', eurChartInstance);
+
+    await new Promise(r => setTimeout(r, 500));
+
+    cnyStatus.textContent = 'Загрузка...';
+    const cny = await loadCurrencyHistory('CNY', period);
+    cnyChartInstance = drawCurrencyChart('cnyChart', 'cnyStatus', cny, 'CNY/RUB', cnyChartInstance);
   } catch (e) {
-    console.error(e);
-    statusEl.textContent = 'Ошибка: ' + e.message;
+    console.error('Ошибка валют:', e);
+    [usdStatus, eurStatus, cnyStatus].forEach(s => {
+      if (s.textContent.includes('Загрузка') || s.textContent.includes('Ожидание')) {
+        s.textContent = 'Ошибка: ' + e.message;
+      }
+    });
   }
 }
 
@@ -444,148 +471,4 @@ async function loadCryptoHistory(symbol, period) {
   const candles = data.result[resultKey];
   const recent = candles.slice(-limit);
 
-  const labels = recent.map(c => {
-    const d = new Date(c[0] * 1000);
-    return is24h ? d.toISOString().slice(11, 16) : d.toISOString().slice(0, 10);
-  });
-  const values = recent.map(c => parseFloat(c[4]));
-
-  return { labels, values };
-}
-
-function drawCryptoChart(canvasId, statusId, data, label, currentInstance) {
-  const statusEl = document.getElementById(statusId);
-  const canvasEl = document.getElementById(canvasId);
-
-  if (currentInstance) currentInstance.destroy();
-  const color = getTrendColor(data.values);
-
-  const ctx = canvasEl.getContext('2d');
-  const chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: data.labels,
-      datasets: [{
-        label: label,
-        data: data.values,
-        borderColor: color.border,
-        backgroundColor: color.background,
-        fill: true, tension: 0.25, pointRadius: 0, borderWidth: 2,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
-      scales: {
-        x: { display: false },
-        y: {
-          grid: { color: 'rgba(128,128,128,0.15)' },
-          ticks: { color: tg.themeParams?.hint_color || '#888', font: { size: 10 } }
-        }
-      }
-    }
-  });
-
-  const last = data.values[data.values.length - 1];
-  const first = data.values[0];
-  const change = ((last - first) / first * 100).toFixed(2);
-  statusEl.textContent = `$${last.toFixed(2)} • ${change > 0 ? '+' : ''}${change}%`;
-
-  return chart;
-}
-
-async function renderCryptoChart(period) {
-  const btcStatus = document.getElementById('btcStatus');
-  const tonStatus = document.getElementById('tonStatus');
-  const ethStatus = document.getElementById('ethStatus');
-
-  btcStatus.textContent = 'Загрузка...';
-  tonStatus.textContent = 'Ожидание...';
-  ethStatus.textContent = 'Ожидание...';
-
-  try {
-    const btc = await loadCryptoHistory('bitcoin', period);
-    btcChartInstance = drawCryptoChart('btcChart', 'btcStatus', btc, 'BTC', btcChartInstance);
-
-    await new Promise(r => setTimeout(r, 1000));
-
-    tonStatus.textContent = 'Загрузка...';
-    const ton = await loadCryptoHistory('the-open-network', period);
-    tonChartInstance = drawCryptoChart('tonChart', 'tonStatus', ton, 'TON', tonChartInstance);
-
-    await new Promise(r => setTimeout(r, 1000));
-
-    ethStatus.textContent = 'Загрузка...';
-    const eth = await loadCryptoHistory('ethereum', period);
-    ethChartInstance = drawCryptoChart('ethChart', 'ethStatus', eth, 'ETH', ethChartInstance);
-  } catch (e) {
-    console.error('Ошибка крипты:', e);
-    [btcStatus, tonStatus, ethStatus].forEach(s => {
-      if (s.textContent.includes('Загрузка') || s.textContent.includes('Ожидание')) {
-        s.textContent = 'Ошибка: ' + e.message;
-      }
-    });
-  }
-}
-
-document.querySelectorAll('#cryptoPeriods .period-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#cryptoPeriods .period-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const period = btn.dataset.hours ? { hours: 24 } : { days: parseInt(btn.dataset.days, 10) };
-    renderCryptoChart(period);
-  });
-});
-
-// ============================================
-// Поиск
-// ============================================
-function filterList(query, list) {
-  const q = query.trim().toLowerCase();
-  if (!q) return null;
-  return list.filter(item => {
-    const ticker = (item.ticker || '').toLowerCase();
-    const name = (item.name || '').toLowerCase();
-    return ticker.includes(q) || name.includes(q);
-  });
-}
-
-document.getElementById('stocksSearch')?.addEventListener('input', (e) => {
-  const q = e.target.value.trim();
-  if (!q) {
-    renderStocksRows(allStocks.slice(0, 100));
-    return;
-  }
-  const filtered = filterList(q, allStocks) || [];
-  renderStocksRows(filtered.slice(0, 100));
-});
-
-document.getElementById('bondsSearch')?.addEventListener('input', (e) => {
-  const q = e.target.value.trim();
-  if (!q) {
-    const ofz = allBonds.filter(b => b.ticker.startsWith('SU')).sort((a, b) => b.turnover - a.turnover).slice(0, 10);
-    const corporate = allBonds.filter(b => !b.ticker.startsWith('SU')).sort((a, b) => b.turnover - a.turnover).slice(0, 20);
-    renderBondsRows([...ofz, ...corporate]);
-    return;
-  }
-  const filtered = filterList(q, allBonds) || [];
-  renderBondsRows(filtered.slice(0, 100));
-});
-
-// ============================================
-// Lottie: бриллиант на главном экране
-// ============================================
-if (typeof lottie !== 'undefined') {
-  lottie.loadAnimation({
-    container: document.getElementById('gemAnimation'),
-    renderer: 'svg',
-    loop: true,
-    autoplay: true,
-    path: 'gem.json',
-  });
-}
-
-// ============================================
-// Старт
-// ============================================
-switchTab('home');
+  const labels = recent.map(c =>
