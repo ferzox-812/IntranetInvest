@@ -102,7 +102,7 @@ canvas {
   border: 1px solid #8b5cf6;
   border-radius: 14px;
   padding: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 0;
   cursor: pointer;
   font-family: inherit;
   color: var(--tg-theme-text-color, #000);
@@ -131,6 +131,14 @@ canvas {
   font-size: 18px;
   color: #8b5cf6;
   font-weight: 600;
+}
+
+/* --- Lottie: бриллиант на главном --- */
+.gem-animation {
+  width: 220px;
+  height: 220px;
+  margin: 8px auto 0;
+  pointer-events: none;
 }
 
 /* --- P2P-опции --- */
