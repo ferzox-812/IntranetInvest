@@ -31,9 +31,9 @@
           <span class="home-icon">📊</span>
           <span class="home-title">Индекс Мосбиржи</span>
         </button>
-        <button class="home-tile" data-target="markets">
+        <button class="home-tile" data-target="stocks">
           <span class="home-icon">📈</span>
-          <span class="home-title">Акции и облигации</span>
+          <span class="home-title">Акции</span>
         </button>
       </div>
 
@@ -44,25 +44,6 @@
       </button>
 
       <div id="gemAnimation" class="gem-animation"></div>
-    </section>
-
-    <!-- ВЫБОР: АКЦИИ / ОБЛИГАЦИИ -->
-    <section class="tab hidden" data-tab="markets">
-      <button class="back-btn" data-back="home">← Назад</button>
-      <div class="home-grid">
-        <button class="home-tile" data-target="stocks">
-          <span class="home-icon">📈</span>
-          <span class="home-title">Акции</span>
-        </button>
-        <button class="home-tile" data-target="bonds">
-          <span class="home-icon">💰</span>
-          <span class="home-title">Облигации</span>
-        </button>
-      </div>
-      <footer class="footer">
-        <a href="https://t.me/intronettx" target="_blank" class="footer-link">By Intranet</a>
-        <span class="footer-sub">Ferzixx's Creation</span>
-      </footer>
     </section>
 
     <!-- P2P -->
@@ -98,7 +79,7 @@
 
     <!-- АКЦИИ -->
     <section class="tab hidden" data-tab="stocks">
-      <button class="back-btn" data-back="markets">← Назад</button>
+      <button class="back-btn" data-back="home">← Назад</button>
       <div class="card">
         <input
           type="text"
@@ -114,33 +95,6 @@
         </div>
         <div id="stocksList" class="list">
           <p class="status">Загрузка акций...</p>
-        </div>
-      </div>
-      <footer class="footer">
-        <a href="https://t.me/intronettx" target="_blank" class="footer-link">By Intranet</a>
-        <span class="footer-sub">Ferzixx's Creation</span>
-      </footer>
-    </section>
-
-    <!-- ОБЛИГАЦИИ -->
-    <section class="tab hidden" data-tab="bonds">
-      <button class="back-btn" data-back="markets">← Назад</button>
-      <div class="card">
-        <input
-          type="text"
-          class="search-input"
-          id="bondsSearch"
-          placeholder="Поиск: тикер или название..."
-          autocomplete="off"
-        >
-        <div class="list-header bonds-header">
-          <span>Тикер</span>
-          <span>Купон</span>
-          <span>Цена</span>
-          <span>Доходн.</span>
-        </div>
-        <div id="bondsList" class="list">
-          <p class="status">Загрузка облигаций...</p>
         </div>
       </div>
       <footer class="footer">
