@@ -45,10 +45,8 @@ function getTrendColor(values) {
 // ============================================
 const SUBTITLES = {
   home: 'Главная',
-  markets: 'Акции и облигации',
   p2p: 'Приобрести криптовалюту',
   stocks: 'Акции',
-  bonds: 'Облигации',
   index: 'Индекс Мосбиржи',
   dollar: 'Валюты',
   crypto: 'Криптовалюты',
@@ -63,7 +61,6 @@ function switchTab(name) {
 
   if (name === 'index' && !LOADED.index) { LOADED.index = true; renderChart('index', 'IMOEX', { days: 365 }); }
   if (name === 'stocks' && !LOADED.stocks) { LOADED.stocks = true; renderStocksList(); }
-  if (name === 'bonds' && !LOADED.bonds) { LOADED.bonds = true; renderBondsList(); }
   if (name === 'dollar' && !LOADED.dollar) { LOADED.dollar = true; renderDollarChart({ days: 365 }); }
   if (name === 'crypto' && !LOADED.crypto) { LOADED.crypto = true; renderCryptoChart({ days: 365 }); }
 }
@@ -137,62 +134,6 @@ function renderStocksRows(stocks) {
 }
 
 // ============================================
-// Облигации
-// ============================================
-let allBonds = [];
-
-async function renderBondsList() {
-  const listEl = document.getElementById('bondsList');
-  try {
-    const url = 'https://iss.moex.com/iss/engines/stock/markets/bonds/boards/TQOB/securities.json?iss.meta=off&iss.only=securities,marketdata';
-    const data = await fetchJSONViaProxy(url);
-    const secCols = data.securities.columns, secRows = data.securities.data;
-    const mdCols = data.marketdata.columns, mdRows = data.marketdata.data;
-    const iSecId = secCols.indexOf('SECID'), iShortName = secCols.indexOf('SHORTNAME'), iCoupon = secCols.indexOf('COUPONPERCENT');
-    const iLast = mdCols.indexOf('LAST'), iPrev = mdCols.indexOf('PREVPRICE');
-    const iValToday = mdCols.indexOf('VALTODAY'), iYield = mdCols.indexOf('YIELDATPREVWAPRICE');
-
-    allBonds = secRows.map((row, i) => {
-      const md = mdRows[i] || [];
-      return {
-        ticker: row[iSecId], name: row[iShortName],
-        last: md[iLast], prev: md[iPrev], coupon: row[iCoupon],
-        yieldVal: md[iYield], turnover: md[iValToday] || 0,
-      };
-    }).filter(b => b.last != null && b.turnover > 0);
-
-    const ofz = allBonds.filter(b => b.ticker.startsWith('SU')).sort((a, b) => b.turnover - a.turnover).slice(0, 10);
-    const corporate = allBonds.filter(b => !b.ticker.startsWith('SU')).sort((a, b) => b.turnover - a.turnover).slice(0, 20);
-    renderBondsRows([...ofz, ...corporate]);
-  } catch (e) {
-    console.error(e);
-    listEl.innerHTML = `<p class="status">Ошибка: ${e.message}</p>`;
-  }
-}
-
-function renderBondsRows(bonds) {
-  const listEl = document.getElementById('bondsList');
-  if (bonds.length === 0) {
-    listEl.innerHTML = `<p class="status">Ничего не найдено</p>`;
-    return;
-  }
-
-  listEl.innerHTML = bonds.map(b => {
-    const isOfz = b.ticker.startsWith('SU');
-    return `<div class="bond-row" data-ticker="${b.ticker}" data-name="${b.name || ''}" data-type="bond">
-      <div><div class="stock-ticker">${isOfz ? '<span class="ofz-badge">ОФЗ</span> ' : ''}${b.ticker}</div><div class="stock-name">${b.name || ''}</div></div>
-      <div class="bond-cell bond-coupon">${b.coupon != null ? b.coupon.toFixed(2) : '—'}%</div>
-      <div class="bond-cell">${b.last != null ? b.last.toFixed(2) : '—'}</div>
-      <div class="bond-cell">${b.yieldVal != null ? b.yieldVal.toFixed(2) : '—'}%</div>
-    </div>`;
-  }).join('');
-
-  listEl.querySelectorAll('.bond-row').forEach(row => {
-    row.addEventListener('click', () => openStockView(row.dataset.ticker, row.dataset.name, 'bond'));
-  });
-}
-
-// ============================================
 // Экран бумаги
 // ============================================
 let stockChartInstance = null;
@@ -207,7 +148,7 @@ function openStockView(ticker, name, type) {
   document.querySelectorAll('#stockPeriods .period-btn').forEach(b => b.classList.remove('active'));
   document.querySelector('#stockPeriods .period-btn[data-days="365"]')?.classList.add('active');
   document.getElementById('stockView').classList.remove('hidden');
-  renderChart(type === 'bond' ? 'bond' : 'stock', ticker, { days: 365 });
+  renderChart('stock', ticker, { days: 365 });
 }
 
 function closeStockView() {
@@ -232,7 +173,6 @@ async function loadHistory(target, secid, period) {
 
   let endpoint;
   if (target === 'index') endpoint = `https://iss.moex.com/iss/history/engines/stock/markets/index/securities/${secid}.json`;
-  else if (target === 'bond') endpoint = `https://iss.moex.com/iss/history/engines/stock/markets/bonds/boards/TQOB/securities/${secid}.json`;
   else endpoint = `https://iss.moex.com/iss/history/engines/stock/markets/shares/boards/TQBR/securities/${secid}.json`;
 
   let allRows = [], columns = null, start = 0;
@@ -325,7 +265,7 @@ document.querySelectorAll('#stockPeriods .period-btn').forEach(btn => {
     btn.classList.add('active');
     if (currentTicker) {
       const period = btn.dataset.hours ? { hours: 24 } : { days: parseInt(btn.dataset.days, 10) };
-      renderChart(currentType === 'bond' ? 'bond' : 'stock', currentTicker, period);
+      renderChart('stock', currentTicker, period);
     }
   });
 });
@@ -562,7 +502,7 @@ document.querySelectorAll('#cryptoPeriods .period-btn').forEach(btn => {
 });
 
 // ============================================
-// Поиск
+// Поиск по акциям
 // ============================================
 function filterList(query, list) {
   const q = query.trim().toLowerCase();
@@ -582,18 +522,6 @@ document.getElementById('stocksSearch')?.addEventListener('input', (e) => {
   }
   const filtered = filterList(q, allStocks) || [];
   renderStocksRows(filtered.slice(0, 100));
-});
-
-document.getElementById('bondsSearch')?.addEventListener('input', (e) => {
-  const q = e.target.value.trim();
-  if (!q) {
-    const ofz = allBonds.filter(b => b.ticker.startsWith('SU')).sort((a, b) => b.turnover - a.turnover).slice(0, 10);
-    const corporate = allBonds.filter(b => !b.ticker.startsWith('SU')).sort((a, b) => b.turnover - a.turnover).slice(0, 20);
-    renderBondsRows([...ofz, ...corporate]);
-    return;
-  }
-  const filtered = filterList(q, allBonds) || [];
-  renderBondsRows(filtered.slice(0, 100));
 });
 
 // ============================================
