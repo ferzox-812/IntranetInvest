@@ -16,7 +16,7 @@
 
   <main id="content">
 
-    <!-- ГЛАВНЫЙ ЭКРАН -->
+    <!-- ГЛАВНЫЙ ЭКРАН (без футера) -->
     <section class="tab" data-tab="home">
       <div class="home-grid">
         <button class="home-tile" data-target="dollar">
@@ -36,10 +36,12 @@
           <span class="home-title">Акции и облигации</span>
         </button>
       </div>
-      <footer class="footer">
-        <a href="https://t.me/intronettx" target="_blank" class="footer-link">By Intranet</a>
-        <span class="footer-sub">Ferzixx's Creation</span>
-      </footer>
+
+      <button class="crypto-buy-banner" data-target="p2p">
+        <span class="crypto-buy-icon">🛒</span>
+        <span class="crypto-buy-text">Приобрести криптовалюту</span>
+        <span class="crypto-buy-arrow">→</span>
+      </button>
     </section>
 
     <!-- ВЫБОР: АКЦИИ / ОБЛИГАЦИИ -->
@@ -55,6 +57,37 @@
           <span class="home-title">Облигации</span>
         </button>
       </div>
+      <footer class="footer">
+        <a href="https://t.me/intronettx" target="_blank" class="footer-link">By Intranet</a>
+        <span class="footer-sub">Ferzixx's Creation</span>
+      </footer>
+    </section>
+
+    <!-- P2P: покупка криптовалюты -->
+    <section class="tab hidden" data-tab="p2p">
+      <button class="back-btn" data-back="home">← Назад</button>
+
+      <div class="card">
+        <h3 style="margin: 0 0 12px; font-size: 16px; font-weight: 600;">Приобрести криптовалюту</h3>
+        <p class="status" style="margin: 0; text-align: left;">Выберите сервис для покупки:</p>
+      </div>
+
+      <a href="https://t.me/walt" target="_blank" class="p2p-option">
+        <div class="p2p-option-info">
+          <span class="p2p-option-title">Walt (С верификацией)</span>
+          <span class="p2p-option-desc">P2P от @walt · 150M пользователей</span>
+        </div>
+        <span class="p2p-option-arrow">→</span>
+      </a>
+
+      <a href="https://t.me/CryptoBot?start=p2p" target="_blank" class="p2p-option">
+        <div class="p2p-option-info">
+          <span class="p2p-option-title">CryptoBot (Без верификации)</span>
+          <span class="p2p-option-desc">P2P Market от @CryptoBot</span>
+        </div>
+        <span class="p2p-option-arrow">→</span>
+      </a>
+
       <footer class="footer">
         <a href="https://t.me/intronettx" target="_blank" class="footer-link">By Intranet</a>
         <span class="footer-sub">Ferzixx's Creation</span>
