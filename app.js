@@ -573,6 +573,19 @@ document.getElementById('bondsSearch')?.addEventListener('input', (e) => {
 });
 
 // ============================================
+// Lottie: бриллиант на главном экране
+// ============================================
+if (typeof lottie !== 'undefined') {
+  lottie.loadAnimation({
+    container: document.getElementById('gemAnimation'),
+    renderer: 'svg',
+    loop: true,
+    autoplay: true,
+    path: 'gem.json',
+  });
+}
+
+// ============================================
 // Старт
 // ============================================
 switchTab('home');
