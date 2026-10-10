@@ -20,8 +20,8 @@
     <section class="tab" data-tab="home">
       <div class="home-grid">
         <button class="home-tile" data-target="dollar">
-          <span class="home-icon">💵</span>
-          <span class="home-title">Доллар</span>
+          <span class="home-icon">💱</span>
+          <span class="home-title">Валюты</span>
         </button>
         <button class="home-tile" data-target="crypto">
           <span class="home-icon">🪙</span>
@@ -169,7 +169,7 @@
       </footer>
     </section>
 
-    <!-- ДОЛЛАР -->
+    <!-- ВАЛЮТЫ -->
     <section class="tab hidden" data-tab="dollar">
       <button class="back-btn" data-back="home">← Назад</button>
       <div class="card">
@@ -179,9 +179,26 @@
           <button class="period-btn" data-days="180">6М</button>
           <button class="period-btn active" data-days="365">1Г</button>
         </div>
-        <canvas id="dollarChart"></canvas>
-        <p id="dollarStatus" class="status">Загрузка...</p>
       </div>
+
+      <div class="card">
+        <h3 style="margin: 0 0 8px; font-size: 15px;">🇺🇸 Доллар (USD/RUB)</h3>
+        <canvas id="usdChart"></canvas>
+        <p id="usdStatus" class="status">Загрузка...</p>
+      </div>
+
+      <div class="card">
+        <h3 style="margin: 0 0 8px; font-size: 15px;">🇪🇺 Евро (EUR/RUB)</h3>
+        <canvas id="eurChart"></canvas>
+        <p id="eurStatus" class="status">Загрузка...</p>
+      </div>
+
+      <div class="card">
+        <h3 style="margin: 0 0 8px; font-size: 15px;">🇨🇳 Юань (CNY/RUB)</h3>
+        <canvas id="cnyChart"></canvas>
+        <p id="cnyStatus" class="status">Загрузка...</p>
+      </div>
+
       <footer class="footer">
         <a href="https://t.me/intronettx" target="_blank" class="footer-link">By Intranet</a>
         <span class="footer-sub">Ferzixx's Creation</span>
