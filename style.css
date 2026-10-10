@@ -189,6 +189,30 @@ canvas {
   display: block;
 }
 
+/* --- Поиск --- */
+.search-input {
+  width: 100%;
+  background: var(--tg-theme-bg-color, #fff);
+  border: 1px solid rgba(128,128,128,0.25);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--tg-theme-text-color, #000);
+  margin-bottom: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.search-input:focus {
+  border-color: var(--tg-theme-button-color, #2481cc);
+}
+
+.search-input::placeholder {
+  color: var(--tg-theme-hint-color, #888);
+  opacity: 0.7;
+}
+
 /* --- Переключатель периодов --- */
 .period-switch {
   display: flex;
