@@ -86,6 +86,8 @@ document.querySelectorAll('.back-btn[data-back]').forEach(btn => {
 // ============================================
 // Акции
 // ============================================
+let allStocks = [];
+
 async function renderStocksList() {
   const listEl = document.getElementById('stocksList');
   try {
@@ -96,7 +98,7 @@ async function renderStocksList() {
     const iSecId = secCols.indexOf('SECID'), iShortName = secCols.indexOf('SHORTNAME');
     const iPrev = mdCols.indexOf('PREVPRICE'), iLast = mdCols.indexOf('LAST'), iValToday = mdCols.indexOf('VALTODAY');
 
-    const stocks = secRows.map((row, i) => {
+    allStocks = secRows.map((row, i) => {
       const md = mdRows[i] || [];
       const last = md[iLast], prev = md[iPrev], turnover = md[iValToday] || 0;
       return {
@@ -106,31 +108,42 @@ async function renderStocksList() {
       };
     })
     .filter(s => s.last != null && s.turnover > 0)
-    .sort((a, b) => b.turnover - a.turnover)
-    .slice(0, 100);
+    .sort((a, b) => b.turnover - a.turnover);
 
-    listEl.innerHTML = stocks.map(s => {
-      const changeClass = s.change > 0 ? 'up' : (s.change < 0 ? 'down' : '');
-      const changeText = s.change != null ? `${s.change > 0 ? '+' : ''}${s.change.toFixed(2)}%` : '—';
-      return `<div class="stock-row" data-ticker="${s.ticker}" data-name="${s.name || ''}" data-type="stock">
-        <div><div class="stock-ticker">${s.ticker}</div><div class="stock-name">${s.name || ''}</div></div>
-        <div class="stock-price">${s.last.toFixed(2)}</div>
-        <div class="stock-change ${changeClass}">${changeText}</div>
-      </div>`;
-    }).join('');
-
-    listEl.querySelectorAll('.stock-row').forEach(row => {
-      row.addEventListener('click', () => openStockView(row.dataset.ticker, row.dataset.name, 'stock'));
-    });
+    renderStocksRows(allStocks.slice(0, 100));
   } catch (e) {
     console.error(e);
     listEl.innerHTML = `<p class="status">Ошибка: ${e.message}</p>`;
   }
 }
 
+function renderStocksRows(stocks) {
+  const listEl = document.getElementById('stocksList');
+  if (stocks.length === 0) {
+    listEl.innerHTML = `<p class="status">Ничего не найдено</p>`;
+    return;
+  }
+
+  listEl.innerHTML = stocks.map(s => {
+    const changeClass = s.change > 0 ? 'up' : (s.change < 0 ? 'down' : '');
+    const changeText = s.change != null ? `${s.change > 0 ? '+' : ''}${s.change.toFixed(2)}%` : '—';
+    return `<div class="stock-row" data-ticker="${s.ticker}" data-name="${s.name || ''}" data-type="stock">
+      <div><div class="stock-ticker">${s.ticker}</div><div class="stock-name">${s.name || ''}</div></div>
+      <div class="stock-price">${s.last.toFixed(2)}</div>
+      <div class="stock-change ${changeClass}">${changeText}</div>
+    </div>`;
+  }).join('');
+
+  listEl.querySelectorAll('.stock-row').forEach(row => {
+    row.addEventListener('click', () => openStockView(row.dataset.ticker, row.dataset.name, 'stock'));
+  });
+}
+
 // ============================================
 // Облигации
 // ============================================
+let allBonds = [];
+
 async function renderBondsList() {
   const listEl = document.getElementById('bondsList');
   try {
@@ -142,7 +155,7 @@ async function renderBondsList() {
     const iLast = mdCols.indexOf('LAST'), iPrev = mdCols.indexOf('PREVPRICE');
     const iValToday = mdCols.indexOf('VALTODAY'), iYield = mdCols.indexOf('YIELDATPREVWAPRICE');
 
-    const allBonds = secRows.map((row, i) => {
+    allBonds = secRows.map((row, i) => {
       const md = mdRows[i] || [];
       return {
         ticker: row[iSecId], name: row[iShortName],
@@ -153,25 +166,33 @@ async function renderBondsList() {
 
     const ofz = allBonds.filter(b => b.ticker.startsWith('SU')).sort((a, b) => b.turnover - a.turnover).slice(0, 10);
     const corporate = allBonds.filter(b => !b.ticker.startsWith('SU')).sort((a, b) => b.turnover - a.turnover).slice(0, 20);
-    const bonds = [...ofz, ...corporate];
-
-    listEl.innerHTML = bonds.map(b => {
-      const isOfz = b.ticker.startsWith('SU');
-      return `<div class="bond-row" data-ticker="${b.ticker}" data-name="${b.name || ''}" data-type="bond">
-        <div><div class="stock-ticker">${isOfz ? '<span class="ofz-badge">ОФЗ</span> ' : ''}${b.ticker}</div><div class="stock-name">${b.name || ''}</div></div>
-        <div class="bond-cell bond-coupon">${b.coupon != null ? b.coupon.toFixed(2) : '—'}%</div>
-        <div class="bond-cell">${b.last != null ? b.last.toFixed(2) : '—'}</div>
-        <div class="bond-cell">${b.yieldVal != null ? b.yieldVal.toFixed(2) : '—'}%</div>
-      </div>`;
-    }).join('');
-
-    listEl.querySelectorAll('.bond-row').forEach(row => {
-      row.addEventListener('click', () => openStockView(row.dataset.ticker, row.dataset.name, 'bond'));
-    });
+    renderBondsRows([...ofz, ...corporate]);
   } catch (e) {
     console.error(e);
     listEl.innerHTML = `<p class="status">Ошибка: ${e.message}</p>`;
   }
+}
+
+function renderBondsRows(bonds) {
+  const listEl = document.getElementById('bondsList');
+  if (bonds.length === 0) {
+    listEl.innerHTML = `<p class="status">Ничего не найдено</p>`;
+    return;
+  }
+
+  listEl.innerHTML = bonds.map(b => {
+    const isOfz = b.ticker.startsWith('SU');
+    return `<div class="bond-row" data-ticker="${b.ticker}" data-name="${b.name || ''}" data-type="bond">
+      <div><div class="stock-ticker">${isOfz ? '<span class="ofz-badge">ОФЗ</span> ' : ''}${b.ticker}</div><div class="stock-name">${b.name || ''}</div></div>
+      <div class="bond-cell bond-coupon">${b.coupon != null ? b.coupon.toFixed(2) : '—'}%</div>
+      <div class="bond-cell">${b.last != null ? b.last.toFixed(2) : '—'}</div>
+      <div class="bond-cell">${b.yieldVal != null ? b.yieldVal.toFixed(2) : '—'}%</div>
+    </div>`;
+  }).join('');
+
+  listEl.querySelectorAll('.bond-row').forEach(row => {
+    row.addEventListener('click', () => openStockView(row.dataset.ticker, row.dataset.name, 'bond'));
+  });
 }
 
 // ============================================
@@ -395,7 +416,7 @@ document.querySelectorAll('#dollarPeriods .period-btn').forEach(btn => {
 });
 
 // ============================================
-// Крипта — Kraken API (часовые свечи для 24Ч)
+// Крипта — Kraken API
 // ============================================
 let btcChartInstance = null;
 let tonChartInstance = null;
@@ -425,9 +446,7 @@ async function loadCryptoHistory(symbol, period) {
 
   const labels = recent.map(c => {
     const d = new Date(c[0] * 1000);
-    return is24h
-      ? d.toISOString().slice(11, 16)
-      : d.toISOString().slice(0, 10);
+    return is24h ? d.toISOString().slice(11, 16) : d.toISOString().slice(0, 10);
   });
   const values = recent.map(c => parseFloat(c[4]));
 
@@ -516,6 +535,41 @@ document.querySelectorAll('#cryptoPeriods .period-btn').forEach(btn => {
     const period = btn.dataset.hours ? { hours: 24 } : { days: parseInt(btn.dataset.days, 10) };
     renderCryptoChart(period);
   });
+});
+
+// ============================================
+// Поиск
+// ============================================
+function filterList(query, list) {
+  const q = query.trim().toLowerCase();
+  if (!q) return null;
+  return list.filter(item => {
+    const ticker = (item.ticker || '').toLowerCase();
+    const name = (item.name || '').toLowerCase();
+    return ticker.includes(q) || name.includes(q);
+  });
+}
+
+document.getElementById('stocksSearch')?.addEventListener('input', (e) => {
+  const q = e.target.value.trim();
+  if (!q) {
+    renderStocksRows(allStocks.slice(0, 100));
+    return;
+  }
+  const filtered = filterList(q, allStocks) || [];
+  renderStocksRows(filtered.slice(0, 100));
+});
+
+document.getElementById('bondsSearch')?.addEventListener('input', (e) => {
+  const q = e.target.value.trim();
+  if (!q) {
+    const ofz = allBonds.filter(b => b.ticker.startsWith('SU')).sort((a, b) => b.turnover - a.turnover).slice(0, 10);
+    const corporate = allBonds.filter(b => !b.ticker.startsWith('SU')).sort((a, b) => b.turnover - a.turnover).slice(0, 20);
+    renderBondsRows([...ofz, ...corporate]);
+    return;
+  }
+  const filtered = filterList(q, allBonds) || [];
+  renderBondsRows(filtered.slice(0, 100));
 });
 
 // ============================================
