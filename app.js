@@ -46,6 +46,7 @@ function getTrendColor(values) {
 const SUBTITLES = {
   home: 'Главная',
   markets: 'Акции и облигации',
+  p2p: 'Приобрести криптовалюту',
   stocks: 'Акции',
   bonds: 'Облигации',
   index: 'Индекс Мосбиржи',
@@ -67,10 +68,17 @@ function switchTab(name) {
   if (name === 'crypto' && !LOADED.crypto) { LOADED.crypto = true; renderCryptoChart({ days: 365 }); }
 }
 
+// Клик по плиткам
 document.querySelectorAll('.home-tile').forEach(tile => {
   tile.addEventListener('click', () => switchTab(tile.dataset.target));
 });
 
+// Клик по рамке "Приобрести криптовалюту"
+document.querySelectorAll('.crypto-buy-banner').forEach(banner => {
+  banner.addEventListener('click', () => switchTab(banner.dataset.target));
+});
+
+// Клик по "Назад"
 document.querySelectorAll('.back-btn[data-back]').forEach(btn => {
   btn.addEventListener('click', () => switchTab(btn.dataset.back));
 });
@@ -237,282 +245,4 @@ async function renderChart(target, secid, period) {
   const label = period.hours ? '24Ч' : `${period.days} дн`;
   statusEl.textContent = `Загрузка за ${label}...`;
 
-  try {
-    const { labels, values } = await loadHistory(target, secid, period);
-    if (values.length === 0) throw new Error('Нет данных за период');
-    const ctx = canvasEl.getContext('2d');
-    if (target === 'index' && window.__imoexChartInstance) window.__imoexChartInstance.destroy();
-    if (target !== 'index' && stockChartInstance) stockChartInstance.destroy();
-
-    const color = getTrendColor(values);
-
-    const chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: secid,
-          data: values,
-          borderColor: color.border,
-          backgroundColor: color.background,
-          fill: true, tension: 0.25, pointRadius: 0, borderWidth: 2,
-        }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
-        scales: {
-          x: { display: false },
-          y: {
-            grid: { color: 'rgba(128,128,128,0.15)' },
-            ticks: { color: tg.themeParams?.hint_color || '#888', font: { size: 10 } }
-          }
-        }
-      }
-    });
-
-    if (target === 'index') window.__imoexChartInstance = chart;
-    else stockChartInstance = chart;
-
-    const last = values[values.length - 1];
-    const first = values[0];
-    const change = ((last - first) / first * 100).toFixed(2);
-    statusEl.textContent = `Текущее: ${last.toFixed(2)} • Изменение: ${change > 0 ? '+' : ''}${change}%`;
-  } catch (e) {
-    console.error(e);
-    statusEl.textContent = 'Ошибка: ' + e.message;
-  }
-}
-
-// Обработчики периодов: индекс
-document.querySelectorAll('#indexPeriods .period-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#indexPeriods .period-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const period = btn.dataset.hours ? { hours: 24 } : { days: parseInt(btn.dataset.days, 10) };
-    renderChart('index', 'IMOEX', period);
-  });
-});
-
-// Обработчики периодов: бумага
-document.querySelectorAll('#stockPeriods .period-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#stockPeriods .period-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    if (currentTicker) {
-      const period = btn.dataset.hours ? { hours: 24 } : { days: parseInt(btn.dataset.days, 10) };
-      renderChart(currentType === 'bond' ? 'bond' : 'stock', currentTicker, period);
-    }
-  });
-});
-
-// ============================================
-// Доллар — Frankfurter API
-// ============================================
-let dollarChartInstance = null;
-
-async function loadDollarHistory(period) {
-  // Frankfurter отдаёт только дневные данные.
-  // Для 24Ч берём последние 7 дней — минимальный осмысленный отрезок.
-  const days = period.hours === 24 ? 7 : period.days;
-  const end = new Date();
-  const start = new Date();
-  start.setDate(start.getDate() - days);
-  const fmt = (d) => d.toISOString().slice(0, 10);
-
-  const url = `https://api.frankfurter.dev/v2/rates?base=USD&quotes=RUB&from=${fmt(start)}&to=${fmt(end)}`;
-  const data = await fetchJSONViaProxy(url);
-
-  if (!Array.isArray(data)) throw new Error('Неверный формат Frankfurter');
-  const sorted = data.slice().sort((a, b) => a.date.localeCompare(b.date));
-
-  const labels = sorted.map(row => row.date);
-  const values = sorted.map(row => row.rate);
-
-  if (values.length === 0) throw new Error('Frankfurter не вернул данные');
-  return { labels, values };
-}
-
-async function renderDollarChart(period) {
-  const statusEl = document.getElementById('dollarStatus');
-  const canvasEl = document.getElementById('dollarChart');
-  const label = period.hours ? '24Ч (7 дней)' : `${period.days} дн`;
-  statusEl.textContent = `Загрузка за ${label}...`;
-
-  try {
-    const { labels, values } = await loadDollarHistory(period);
-    if (values.length === 0) throw new Error('Нет данных');
-    const ctx = canvasEl.getContext('2d');
-    if (dollarChartInstance) dollarChartInstance.destroy();
-
-    const color = getTrendColor(values);
-
-    dollarChartInstance = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'USD/RUB',
-          data: values,
-          borderColor: color.border,
-          backgroundColor: color.background,
-          fill: true, tension: 0.25, pointRadius: 0, borderWidth: 2,
-        }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
-        scales: {
-          x: { display: false },
-          y: {
-            grid: { color: 'rgba(128,128,128,0.15)' },
-            ticks: { color: tg.themeParams?.hint_color || '#888', font: { size: 10 } }
-          }
-        }
-      }
-    });
-
-    statusEl.textContent = `Курс USD/RUB: ${values[values.length - 1].toFixed(4)} ₽`;
-  } catch (e) {
-    console.error(e);
-    statusEl.textContent = 'Ошибка: ' + e.message;
-  }
-}
-
-document.querySelectorAll('#dollarPeriods .period-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#dollarPeriods .period-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const period = btn.dataset.hours ? { hours: 24 } : { days: parseInt(btn.dataset.days, 10) };
-    renderDollarChart(period);
-  });
-});
-
-// ============================================
-// Крипта — Kraken API (часовые свечи для 24Ч)
-// ============================================
-let btcChartInstance = null;
-let tonChartInstance = null;
-let ethChartInstance = null;
-
-async function loadCryptoHistory(symbol, period) {
-  const pairMap = {
-    'bitcoin': 'XBTUSD',
-    'the-open-network': 'TONUSD',
-    'ethereum': 'ETHUSD',
-  };
-  const pair = pairMap[symbol] || symbol;
-
-  const is24h = period.hours === 24;
-  const interval = is24h ? 60 : 1440;  // 60 = часовые, 1440 = дневные
-  const limit = is24h ? 24 : period.days;
-
-  const url = `https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=${interval}`;
-  const data = await fetchJSONViaProxy(url);
-
-  if (!data.result) throw new Error('Неверный формат Kraken');
-  const resultKey = Object.keys(data.result).find(k => k !== 'last');
-  if (!resultKey) throw new Error('Нет данных Kraken');
-
-  const candles = data.result[resultKey];
-  const recent = candles.slice(-limit);
-
-  const labels = recent.map(c => {
-    const d = new Date(c[0] * 1000);
-    return is24h
-      ? d.toISOString().slice(11, 16)  // HH:MM для 24Ч
-      : d.toISOString().slice(0, 10);   // YYYY-MM-DD для остальных
-  });
-  const values = recent.map(c => parseFloat(c[4]));
-
-  return { labels, values };
-}
-
-function drawCryptoChart(canvasId, statusId, data, label, currentInstance) {
-  const statusEl = document.getElementById(statusId);
-  const canvasEl = document.getElementById(canvasId);
-
-  if (currentInstance) currentInstance.destroy();
-  const color = getTrendColor(data.values);
-
-  const ctx = canvasEl.getContext('2d');
-  const chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: data.labels,
-      datasets: [{
-        label: label,
-        data: data.values,
-        borderColor: color.border,
-        backgroundColor: color.background,
-        fill: true, tension: 0.25, pointRadius: 0, borderWidth: 2,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
-      scales: {
-        x: { display: false },
-        y: {
-          grid: { color: 'rgba(128,128,128,0.15)' },
-          ticks: { color: tg.themeParams?.hint_color || '#888', font: { size: 10 } }
-        }
-      }
-    }
-  });
-
-  const last = data.values[data.values.length - 1];
-  const first = data.values[0];
-  const change = ((last - first) / first * 100).toFixed(2);
-  statusEl.textContent = `$${last.toFixed(2)} • ${change > 0 ? '+' : ''}${change}%`;
-
-  return chart;
-}
-
-async function renderCryptoChart(period) {
-  const btcStatus = document.getElementById('btcStatus');
-  const tonStatus = document.getElementById('tonStatus');
-  const ethStatus = document.getElementById('ethStatus');
-
-  btcStatus.textContent = 'Загрузка...';
-  tonStatus.textContent = 'Ожидание...';
-  ethStatus.textContent = 'Ожидание...';
-
-  try {
-    const btc = await loadCryptoHistory('bitcoin', period);
-    btcChartInstance = drawCryptoChart('btcChart', 'btcStatus', btc, 'BTC', btcChartInstance);
-
-    await new Promise(r => setTimeout(r, 1000));
-
-    tonStatus.textContent = 'Загрузка...';
-    const ton = await loadCryptoHistory('the-open-network', period);
-    tonChartInstance = drawCryptoChart('tonChart', 'tonStatus', ton, 'TON', tonChartInstance);
-
-    await new Promise(r => setTimeout(r, 1000));
-
-    ethStatus.textContent = 'Загрузка...';
-    const eth = await loadCryptoHistory('ethereum', period);
-    ethChartInstance = drawCryptoChart('ethChart', 'ethStatus', eth, 'ETH', ethChartInstance);
-  } catch (e) {
-    console.error('Ошибка крипты:', e);
-    [btcStatus, tonStatus, ethStatus].forEach(s => {
-      if (s.textContent.includes('Загрузка') || s.textContent.includes('Ожидание')) {
-        s.textContent = 'Ошибка: ' + e.message;
-      }
-    });
-  }
-}
-
-document.querySelectorAll('#cryptoPeriods .period-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#cryptoPeriods .period-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const period = btn.dataset.hours ? { hours: 24 } : { days: parseInt(btn.dataset.days, 10) };
-    renderCryptoChart(period);
-  });
-});
-
-// ============================================
-// Старт
-// ============================================
-switchTab('home');
+  try
