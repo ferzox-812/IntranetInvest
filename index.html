@@ -16,7 +16,7 @@
 
   <main id="content">
 
-    <!-- ГЛАВНЫЙ ЭКРАН (без футера) -->
+    <!-- ГЛАВНЫЙ ЭКРАН -->
     <section class="tab" data-tab="home">
       <div class="home-grid">
         <button class="home-tile" data-target="dollar">
@@ -63,7 +63,7 @@
       </footer>
     </section>
 
-    <!-- P2P: покупка криптовалюты -->
+    <!-- P2P -->
     <section class="tab hidden" data-tab="p2p">
       <button class="back-btn" data-back="home">← Назад</button>
 
@@ -98,6 +98,13 @@
     <section class="tab hidden" data-tab="stocks">
       <button class="back-btn" data-back="markets">← Назад</button>
       <div class="card">
+        <input
+          type="text"
+          class="search-input"
+          id="stocksSearch"
+          placeholder="Поиск: тикер или название..."
+          autocomplete="off"
+        >
         <div class="list-header">
           <span>Тикер</span>
           <span>Цена</span>
@@ -117,6 +124,13 @@
     <section class="tab hidden" data-tab="bonds">
       <button class="back-btn" data-back="markets">← Назад</button>
       <div class="card">
+        <input
+          type="text"
+          class="search-input"
+          id="bondsSearch"
+          placeholder="Поиск: тикер или название..."
+          autocomplete="off"
+        >
         <div class="list-header bonds-header">
           <span>Тикер</span>
           <span>Купон</span>
