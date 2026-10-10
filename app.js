@@ -134,15 +134,13 @@ function renderStocksRows(stocks) {
 }
 
 // ============================================
-// Экран бумаги
+// Экран акции
 // ============================================
 let stockChartInstance = null;
 let currentTicker = null;
-let currentType = null;
 
-function openStockView(ticker, name, type) {
+function openStockView(ticker, name) {
   currentTicker = ticker;
-  currentType = type;
   document.getElementById('stockTitle').textContent = ticker;
   document.getElementById('stockSubtitle').textContent = name || '';
   document.querySelectorAll('#stockPeriods .period-btn').forEach(b => b.classList.remove('active'));
@@ -154,7 +152,6 @@ function openStockView(ticker, name, type) {
 function closeStockView() {
   document.getElementById('stockView').classList.add('hidden');
   currentTicker = null;
-  currentType = null;
   if (stockChartInstance) { stockChartInstance.destroy(); stockChartInstance = null; }
 }
 
@@ -164,8 +161,7 @@ document.getElementById('stockBack').addEventListener('click', closeStockView);
 // История MOEX
 // ============================================
 async function loadHistory(target, secid, period) {
-  const is24h = period.hours === 24;
-  const days = is24h ? 3 : period.days;
+  const days = period.days;
 
   const from = new Date();
   from.setDate(from.getDate() - days);
@@ -200,8 +196,7 @@ async function loadHistory(target, secid, period) {
 async function renderChart(target, secid, period) {
   const statusEl = document.getElementById(target === 'index' ? 'chartStatus' : 'stockChartStatus');
   const canvasEl = document.getElementById(target === 'index' ? 'imoexChart' : 'stockChart');
-  const label = period.hours ? '24Ч' : `${period.days} дн`;
-  statusEl.textContent = `Загрузка за ${label}...`;
+  statusEl.textContent = `Загрузка за ${period.days} дн...`;
 
   try {
     const { labels, values } = await loadHistory(target, secid, period);
@@ -254,8 +249,7 @@ document.querySelectorAll('#indexPeriods .period-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#indexPeriods .period-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    const period = btn.dataset.hours ? { hours: 24 } : { days: parseInt(btn.dataset.days, 10) };
-    renderChart('index', 'IMOEX', period);
+    renderChart('index', 'IMOEX', { days: parseInt(btn.dataset.days, 10) });
   });
 });
 
@@ -264,8 +258,7 @@ document.querySelectorAll('#stockPeriods .period-btn').forEach(btn => {
     document.querySelectorAll('#stockPeriods .period-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     if (currentTicker) {
-      const period = btn.dataset.hours ? { hours: 24 } : { days: parseInt(btn.dataset.days, 10) };
-      renderChart('stock', currentTicker, period);
+      renderChart('stock', currentTicker, { days: parseInt(btn.dataset.days, 10) });
     }
   });
 });
