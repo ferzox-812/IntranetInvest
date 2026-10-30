@@ -225,8 +225,8 @@ async function renderChart(target, secid, period) {
         scales: {
           x: { display: false },
           y: {
-            grid: { color: 'rgba(128,128,128,0.15)' },
-            ticks: { color: tg.themeParams?.hint_color || '#888', font: { size: 10 } }
+            grid: { color: 'rgba(255,255,255,0.1)' },
+            ticks: { color: '#888888', font: { size: 10 } }
           }
         }
       }
@@ -316,8 +316,8 @@ function drawCurrencyChart(canvasId, statusId, data, label, currentInstance) {
       scales: {
         x: { display: false },
         y: {
-          grid: { color: 'rgba(128,128,128,0.15)' },
-          ticks: { color: tg.themeParams?.hint_color || '#888', font: { size: 10 } }
+          grid: { color: 'rgba(255,255,255,0.1)' },
+          ticks: { color: '#888888', font: { size: 10 } }
         }
       }
     }
@@ -367,8 +367,7 @@ document.querySelectorAll('#dollarPeriods .period-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#dollarPeriods .period-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    const period = { days: parseInt(btn.dataset.days, 10) };
-    renderDollarChart(period);
+    renderDollarChart({ days: parseInt(btn.dataset.days, 10) });
   });
 });
 
@@ -436,8 +435,8 @@ function drawCryptoChart(canvasId, statusId, data, label, currentInstance) {
       scales: {
         x: { display: false },
         y: {
-          grid: { color: 'rgba(128,128,128,0.15)' },
-          ticks: { color: tg.themeParams?.hint_color || '#888', font: { size: 10 } }
+          grid: { color: 'rgba(255,255,255,0.1)' },
+          ticks: { color: '#888888', font: { size: 10 } }
         }
       }
     }
