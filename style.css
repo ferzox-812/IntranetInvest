@@ -4,8 +4,8 @@ html, body {
   margin: 0;
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: var(--tg-theme-bg-color, #ffffff);
-  color: var(--tg-theme-text-color, #000000);
+  background: #000000 !important; /* Принудительный черный фон */
+  color: #ffffff !important;      /* Белый текст для контраста */
   min-height: 100vh;
 }
 
@@ -32,7 +32,7 @@ h2 {
 }
 
 .card {
-  background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+  background: #1c1c1e; /* Темно-серый для контраста с черным */
   border-radius: 14px;
   padding: 16px;
   margin-bottom: 16px;
@@ -59,8 +59,8 @@ canvas {
 }
 
 .home-tile {
-  background: var(--tg-theme-secondary-bg-color, #f5f5f5);
-  border: 1px solid rgba(128,128,128,0.15);
+  background: #1c1c1e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 24px 12px;
   display: flex;
@@ -71,13 +71,13 @@ canvas {
   cursor: pointer;
   transition: transform 0.1s, background 0.15s;
   min-height: 120px;
-  color: var(--tg-theme-text-color, #000);
+  color: #ffffff;
   font-family: inherit;
 }
 
 .home-tile:active {
   transform: scale(0.97);
-  background: rgba(128,128,128,0.15);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .home-icon {
@@ -105,7 +105,7 @@ canvas {
   margin-bottom: 0;
   cursor: pointer;
   font-family: inherit;
-  color: var(--tg-theme-text-color, #000);
+  color: #ffffff;
   transition: transform 0.1s, background 0.15s;
   text-align: left;
 }
@@ -115,25 +115,11 @@ canvas {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(139, 92, 246, 0.12));
 }
 
-.crypto-buy-icon {
-  font-size: 22px;
-  line-height: 1;
-}
+.crypto-buy-icon { font-size: 22px; line-height: 1; }
+.crypto-buy-text { flex: 1; font-size: 14px; font-weight: 600; color: #8b5cf6; }
+.crypto-buy-arrow { font-size: 18px; color: #8b5cf6; font-weight: 600; }
 
-.crypto-buy-text {
-  flex: 1;
-  font-size: 14px;
-  font-weight: 600;
-  color: #8b5cf6;
-}
-
-.crypto-buy-arrow {
-  font-size: 18px;
-  color: #8b5cf6;
-  font-weight: 600;
-}
-
-/* --- Lottie: бриллиант на главном --- */
+/* --- Lottie: бриллиант --- */
 .gem-animation {
   width: 220px;
   height: 220px;
@@ -146,49 +132,31 @@ canvas {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--tg-theme-secondary-bg-color, #f5f5f5);
-  border: 1px solid rgba(128,128,128,0.15);
+  background: #1c1c1e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
   padding: 18px 16px;
   margin-bottom: 12px;
   text-decoration: none;
-  color: var(--tg-theme-text-color, #000);
+  color: #ffffff;
   transition: transform 0.1s, background 0.15s;
 }
 
 .p2p-option:active {
   transform: scale(0.98);
-  background: rgba(128,128,128,0.15);
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.p2p-option-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.p2p-option-title {
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.p2p-option-desc {
-  font-size: 11px;
-  opacity: 0.6;
-}
-
-.p2p-option-arrow {
-  font-size: 18px;
-  color: #8b5cf6;
-  font-weight: 600;
-}
+.p2p-option-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.p2p-option-title { font-size: 15px; font-weight: 600; }
+.p2p-option-desc { font-size: 11px; opacity: 0.6; }
+.p2p-option-arrow { font-size: 18px; color: #8b5cf6; font-weight: 600; }
 
 /* --- Кнопка "Назад" --- */
 .back-btn {
   background: transparent;
   border: none;
-  color: var(--tg-theme-button-color, #2481cc);
+  color: #8b5cf6; /* Фиолетовый вместо синего Telegram */
   font-size: 15px;
   padding: 8px 0;
   cursor: pointer;
@@ -200,26 +168,20 @@ canvas {
 /* --- Поиск --- */
 .search-input {
   width: 100%;
-  background: var(--tg-theme-bg-color, #fff);
-  border: 1px solid rgba(128,128,128,0.25);
+  background: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 10px;
   padding: 10px 14px;
   font-size: 14px;
   font-family: inherit;
-  color: var(--tg-theme-text-color, #000);
+  color: #ffffff;
   margin-bottom: 12px;
   outline: none;
   transition: border-color 0.15s;
 }
 
-.search-input:focus {
-  border-color: var(--tg-theme-button-color, #2481cc);
-}
-
-.search-input::placeholder {
-  color: var(--tg-theme-hint-color, #888);
-  opacity: 0.7;
-}
+.search-input:focus { border-color: #8b5cf6; }
+.search-input::placeholder { color: #888888; opacity: 0.7; }
 
 /* --- Переключатель периодов --- */
 .period-switch {
@@ -231,8 +193,8 @@ canvas {
 
 .period-btn {
   background: transparent;
-  border: 1px solid rgba(128,128,128,0.25);
-  color: var(--tg-theme-text-color, #000);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
   border-radius: 8px;
   padding: 6px 12px;
   font-size: 12px;
@@ -242,14 +204,13 @@ canvas {
 }
 
 .period-btn.active {
-  background: var(--tg-theme-button-color, #2481cc);
-  border-color: var(--tg-theme-button-color, #2481cc);
-  color: var(--tg-theme-button-text-color, #fff);
+  background: #8b5cf6;
+  border-color: #8b5cf6;
+  color: #ffffff;
 }
 
 /* --- Списки --- */
-.list-header,
-.stock-row {
+.list-header, .stock-row {
   display: grid;
   grid-template-columns: 1fr auto 70px;
   gap: 8px;
@@ -258,29 +219,18 @@ canvas {
   font-size: 14px;
 }
 
-.list-header.bonds-header,
-.bond-row {
-  display: grid;
-  grid-template-columns: 1fr auto auto auto;
-  gap: 8px;
-  align-items: center;
-  padding: 10px 0;
-  font-size: 13px;
-}
-
 .list-header {
   font-size: 11px;
   opacity: 0.5;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 1px solid rgba(128,128,128,0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   padding-bottom: 8px;
   margin-bottom: 4px;
 }
 
-.stock-row,
-.bond-row {
-  border-bottom: 1px solid rgba(128,128,128,0.08);
+.stock-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
   transition: background 0.15s;
   border-radius: 8px;
@@ -288,51 +238,15 @@ canvas {
   margin: 0 -4px;
 }
 
-.stock-row:active,
-.bond-row:active { background: rgba(128,128,128,0.1); }
-
-.stock-row:last-child,
-.bond-row:last-child { border-bottom: none; }
+.stock-row:active { background: rgba(255, 255, 255, 0.1); }
+.stock-row:last-child { border-bottom: none; }
 
 .stock-ticker { font-weight: 600; }
-
-.stock-name {
-  font-size: 11px;
-  opacity: 0.5;
-  margin-top: 2px;
-}
-
-.stock-price,
-.bond-cell {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.stock-change {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  font-weight: 500;
-}
-
+.stock-name { font-size: 11px; opacity: 0.5; margin-top: 2px; }
+.stock-price { text-align: right; font-variant-numeric: tabular-nums; }
+.stock-change { text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
 .stock-change.up { color: #26a269; }
 .stock-change.down { color: #e01b24; }
-
-.bond-coupon {
-  color: #2481cc;
-  font-weight: 500;
-}
-
-.ofz-badge {
-  display: inline-block;
-  background: rgba(36, 129, 204, 0.15);
-  color: #2481cc;
-  font-size: 9px;
-  font-weight: 600;
-  padding: 1px 5px;
-  border-radius: 4px;
-  vertical-align: middle;
-  letter-spacing: 0.3px;
-}
 
 /* --- Футер --- */
 .footer {
@@ -348,22 +262,8 @@ canvas {
   background: rgba(139, 92, 246, 0.05);
 }
 
-.footer-link {
-  color: #8b5cf6;
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: opacity 0.15s;
-}
-
-.footer-link:active { opacity: 0.6; }
-
-.footer-sub {
-  color: #8b5cf6;
-  font-size: 11px;
-  opacity: 0.7;
-  font-weight: 400;
-}
+.footer-link { color: #8b5cf6; font-size: 13px; font-weight: 600; text-decoration: none; }
+.footer-sub { color: #8b5cf6; font-size: 11px; opacity: 0.7; font-weight: 400; }
 
 /* --- Экран бумаги --- */
 .stock-view {
@@ -372,7 +272,7 @@ canvas {
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--tg-theme-bg-color, #fff);
+  background: #000000; /* Черный фон экрана бумаги */
   padding: 16px 16px 24px;
   overflow-y: auto;
   z-index: 200;
