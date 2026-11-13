@@ -133,6 +133,7 @@ canvas { width: 100% !important; max-height: 260px; }
   text-decoration: none;
   color: var(--text-color);
   transition: opacity 0.15s;
+  cursor: pointer;
 }
 
 .news-item:active { opacity: 0.6; }
@@ -140,6 +141,18 @@ canvas { width: 100% !important; max-height: 260px; }
 
 .news-title { font-size: 14px; line-height: 1.4; margin-bottom: 6px; font-weight: 500; }
 .news-date { font-size: 11px; opacity: 0.5; }
+
+/* --- Читалка (экран статьи) --- */
+#articleContent p {
+  margin-bottom: 14px;
+  line-height: 1.7;
+  font-size: 15px;
+  opacity: 0.9;
+}
+
+#articleContent p:last-child { margin-bottom: 0; }
+
+#articleTitle { font-size: 20px; line-height: 1.3; font-weight: 600; }
 
 /* --- Рамка "Приобрести криптовалюту" --- */
 .crypto-buy-banner {
@@ -325,21 +338,3 @@ canvas { width: 100% !important; max-height: 260px; }
 }
 
 .hidden { display: none; }
-
-/* --- Читалка --- */
-#articleContent p {
-  margin-bottom: 14px;
-  line-height: 1.7;
-  font-size: 15px;
-  opacity: 0.9;
-}
-
-#articleContent p:last-child {
-  margin-bottom: 0;
-}
-
-#articleTitle {
-  font-size: 20px;
-  line-height: 1.3;
-  font-weight: 600;
-}
