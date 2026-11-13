@@ -119,8 +119,6 @@ function getChartOptions() {
 // ============================================
 const SUBTITLES = {
   home: 'Главная',
-  news: 'Новости экономики',
-  article: 'Чтение',
   p2p: 'Приобрести криптовалюту',
   stocks: 'Акции',
   index: 'Индекс Мосбиржи',
@@ -139,7 +137,6 @@ function switchTab(name) {
   if (name === 'stocks' && !LOADED.stocks) { LOADED.stocks = true; renderStocksList(); }
   if (name === 'dollar' && !LOADED.dollar) { LOADED.dollar = true; renderDollarChart({ days: 365 }); }
   if (name === 'crypto' && !LOADED.crypto) { LOADED.crypto = true; renderCryptoChart({ days: 365 }); }
-  if (name === 'news' && !LOADED.news) { LOADED.news = true; renderNewsList(); }
 }
 
 document.querySelectorAll('.home-tile').forEach(tile => {
@@ -153,63 +150,6 @@ document.querySelectorAll('.crypto-buy-banner').forEach(banner => {
 document.querySelectorAll('.back-btn[data-back]').forEach(btn => {
   btn.addEventListener('click', () => switchTab(btn.dataset.back));
 });
-
-// ============================================
-// Новости
-// ============================================
-async function renderNewsList() {
-  const listEl = document.getElementById('newsList');
-  try {
-    const items = await fetchJSONViaProxy('interfax/business');
-    if (!items || items.length === 0) throw new Error('Нет новостей');
-
-    listEl.innerHTML = items.map((item, index) => {
-      const date = new Date(item.pubDate).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-      return `<div class="news-item" data-index="${index}">
-        <div class="news-title">${item.title}</div>
-        <div class="news-date">${date}</div>
-      </div>`;
-    }).join('');
-
-    listEl.querySelectorAll('.news-item').forEach(el => {
-      el.addEventListener('click', () => {
-        const idx = parseInt(el.dataset.index, 10);
-        const newsItem = items[idx];
-        if (newsItem && newsItem.link) {
-          openArticle(newsItem.title, newsItem.link);
-        }
-      });
-    });
-
-  } catch (e) {
-    console.error(e);
-    listEl.innerHTML = `<p class="status">Ошибка: ${e.message}</p>`;
-  }
-}
-
-// ============================================
-// Читалка статьи
-// ============================================
-async function openArticle(title, url) {
-  switchTab('article');
-  document.getElementById('articleTitle').textContent = title;
-  const contentEl = document.getElementById('articleContent');
-  contentEl.innerHTML = '<p class="status">Загрузка текста...</p>';
-
-  try {
-    const article = await fetchJSONViaProxy(`interfax/article?articleUrl=${encodeURIComponent(url)}`);
-    
-    if (!article || !article.content || article.content.length === 0) {
-      throw new Error('Не удалось загрузить текст');
-    }
-
-    contentEl.innerHTML = article.content.map(p => `<p style="margin-bottom: 12px; line-height: 1.6; font-size: 15px;">${p}</p>`).join('');
-
-  } catch (e) {
-    console.error(e);
-    contentEl.innerHTML = `<p class="status">Ошибка: ${e.message}. <a href="${url}" target="_blank" style="color: #8b5cf6;">Открыть в браузере</a></p>`;
-  }
-}
 
 // ============================================
 // Акции
@@ -599,44 +539,4 @@ document.querySelectorAll('#cryptoPeriods .period-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#cryptoPeriods .period-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    renderCryptoChart(btn.dataset.hours ? { hours: 24 } : { days: parseInt(btn.dataset.days, 10) });
-  });
-});
-
-// ============================================
-// Поиск по акциям
-// ============================================
-function filterList(query, list) {
-  const q = query.trim().toLowerCase();
-  if (!q) return null;
-  return list.filter(item => {
-    const ticker = (item.ticker || '').toLowerCase();
-    const name = (item.name || '').toLowerCase();
-    return ticker.includes(q) || name.includes(q);
-  });
-}
-
-document.getElementById('stocksSearch')?.addEventListener('input', (e) => {
-  const q = e.target.value.trim();
-  if (!q) { renderStocksRows(allStocks.slice(0, 100)); return; }
-  const filtered = filterList(q, allStocks) || [];
-  renderStocksRows(filtered.slice(0, 100));
-});
-
-// ============================================
-// Lottie: бриллиант
-// ============================================
-if (typeof lottie !== 'undefined') {
-  lottie.loadAnimation({
-    container: document.getElementById('gemAnimation'),
-    renderer: 'svg',
-    loop: true,
-    autoplay: true,
-    path: 'gem.json',
-  });
-}
-
-// ============================================
-// Старт
-// ============================================
-switchTab('home');
+    renderCryptoChart(btn
