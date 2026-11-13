@@ -50,7 +50,6 @@
         <span class="crypto-buy-arrow">→</span>
       </button>
 
-      <!-- НОВАЯ КНОПКА: ПОДДЕРЖАТЬ ПРОЕКТ -->
       <button class="crypto-buy-banner" data-target="support" style="margin-top: 12px; margin-bottom: 12px;">
         <span class="crypto-buy-icon">💜</span>
         <span class="crypto-buy-text">Поддержать проект</span>
@@ -124,18 +123,69 @@
       </footer>
     </section>
 
-    <!-- АКЦИИ -->
+    <!-- АКЦИИ (СПИСОК) -->
     <section class="tab hidden" data-tab="stocks">
       <button class="back-btn" data-back="home">← Назад</button>
       <div class="card">
         <input type="text" class="search-input" id="stocksSearch" placeholder="Поиск: тикер или название..." autocomplete="off">
-        <div class="list-header">
-          <span>Тикер</span>
-          <span>Цена</span>
-          <span>Δ</span>
-        </div>
         <div id="stocksList" class="list">
           <p class="status">Загрузка акций...</p>
+        </div>
+      </div>
+      <footer class="footer">
+        <a href="https://t.me/intronettx" target="_blank" class="footer-link">By Intranet</a>
+        <span class="footer-sub">Ferzixx's Creation</span>
+      </footer>
+    </section>
+
+    <!-- ВАЛЮТЫ (СПИСОК) -->
+    <section class="tab hidden" data-tab="dollar">
+      <button class="back-btn" data-back="home">← Назад</button>
+      <div class="card">
+        <div id="dollarList" class="list">
+          <div class="stock-row" data-currency="USD" style="cursor: pointer;">
+            <div><div class="stock-ticker">🇺🇸 Доллар (USD/RUB)</div><div class="stock-name">Курс к рублю</div></div>
+            <div class="stock-price" id="usdPriceList">—</div>
+            <div class="stock-change">—</div>
+          </div>
+          <div class="stock-row" data-currency="EUR" style="cursor: pointer;">
+            <div><div class="stock-ticker">🇪🇺 Евро (EUR/RUB)</div><div class="stock-name">Курс к рублю</div></div>
+            <div class="stock-price" id="eurPriceList">—</div>
+            <div class="stock-change">—</div>
+          </div>
+          <div class="stock-row" data-currency="CNY" style="cursor: pointer;">
+            <div><div class="stock-ticker">🇨🇳 Юань (CNY/RUB)</div><div class="stock-name">Курс к рублю</div></div>
+            <div class="stock-price" id="cnyPriceList">—</div>
+            <div class="stock-change">—</div>
+          </div>
+        </div>
+      </div>
+      <footer class="footer">
+        <a href="https://t.me/intronettx" target="_blank" class="footer-link">By Intranet</a>
+        <span class="footer-sub">Ferzixx's Creation</span>
+      </footer>
+    </section>
+
+    <!-- КРИПТА (СПИСОК) -->
+    <section class="tab hidden" data-tab="crypto">
+      <button class="back-btn" data-back="home">← Назад</button>
+      <div class="card">
+        <div id="cryptoList" class="list">
+          <div class="stock-row" data-coin="bitcoin" style="cursor: pointer;">
+            <div><div class="stock-ticker">Bitcoin (BTC)</div><div class="stock-name">Bitcoin</div></div>
+            <div class="stock-price" id="btcPriceList">—</div>
+            <div class="stock-change">—</div>
+          </div>
+          <div class="stock-row" data-coin="gram" style="cursor: pointer;">
+            <div><div class="stock-ticker">Gram (GRAM)</div><div class="stock-name">Gram (бывший TON)</div></div>
+            <div class="stock-price" id="tonPriceList">—</div>
+            <div class="stock-change">—</div>
+          </div>
+          <div class="stock-row" data-coin="ethereum" style="cursor: pointer;">
+            <div><div class="stock-ticker">Ethereum (ETH)</div><div class="stock-name">Ethereum</div></div>
+            <div class="stock-price" id="ethPriceList">—</div>
+            <div class="stock-change">—</div>
+          </div>
         </div>
       </div>
       <footer class="footer">
@@ -164,74 +214,6 @@
       </footer>
     </section>
 
-    <!-- ВАЛЮТЫ -->
-    <section class="tab hidden" data-tab="dollar">
-      <button class="back-btn" data-back="home">← Назад</button>
-      <div class="card">
-        <div class="period-switch" id="dollarPeriods">
-          <button class="period-btn" data-days="7">7Д</button>
-          <button class="period-btn" data-days="30">1М</button>
-          <button class="period-btn" data-days="180">6М</button>
-          <button class="period-btn active" data-days="365">1Г</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3 style="margin: 0 0 8px; font-size: 15px;">🇺🇸 Доллар (USD/RUB)</h3>
-        <canvas id="usdChart"></canvas>
-        <p id="usdStatus" class="status">Загрузка...</p>
-      </div>
-
-      <div class="card">
-        <h3 style="margin: 0 0 8px; font-size: 15px;">🇪🇺 Евро (EUR/RUB)</h3>
-        <canvas id="eurChart"></canvas>
-        <p id="eurStatus" class="status">Загрузка...</p>
-      </div>
-
-      <div class="card">
-        <h3 style="margin: 0 0 8px; font-size: 15px;">🇨🇳 Юань (CNY/RUB)</h3>
-        <canvas id="cnyChart"></canvas>
-        <p id="cnyStatus" class="status">Загрузка...</p>
-      </div>
-
-      <footer class="footer">
-        <a href="https://t.me/intronettx" target="_blank" class="footer-link">By Intranet</a>
-        <span class="footer-sub">Ferzixx's Creation</span>
-      </footer>
-    </section>
-
-    <!-- КРИПТА -->
-    <section class="tab hidden" data-tab="crypto">
-      <button class="back-btn" data-back="home">← Назад</button>
-      <div class="card">
-        <div class="period-switch" id="cryptoPeriods">
-          <button class="period-btn" data-hours="24">24Ч</button>
-          <button class="period-btn" data-days="30">1М</button>
-          <button class="period-btn" data-days="180">6М</button>
-          <button class="period-btn active" data-days="365">1Г</button>
-        </div>
-      </div>
-      <div class="card">
-        <h3 style="margin: 0 0 8px; font-size: 15px;">Bitcoin (BTC)</h3>
-        <canvas id="btcChart"></canvas>
-        <p id="btcStatus" class="status">Загрузка...</p>
-      </div>
-      <div class="card">
-        <h3 style="margin: 0 0 8px; font-size: 15px;">Gram (GRAM)</h3>
-        <canvas id="tonChart"></canvas>
-        <p id="tonStatus" class="status">Загрузка...</p>
-      </div>
-      <div class="card">
-        <h3 style="margin: 0 0 8px; font-size: 15px;">Ethereum (ETH)</h3>
-        <canvas id="ethChart"></canvas>
-        <p id="ethStatus" class="status">Загрузка...</p>
-      </div>
-      <footer class="footer">
-        <a href="https://t.me/intronettx" target="_blank" class="footer-link">By Intranet</a>
-        <span class="footer-sub">Ferzixx's Creation</span>
-      </footer>
-    </section>
-
     <!-- ЭКРАН АКЦИИ -->
     <section id="stockView" class="stock-view hidden">
       <button id="stockBack" class="back-btn">← Назад</button>
@@ -248,6 +230,42 @@
         </div>
         <canvas id="stockChart"></canvas>
         <p id="stockChartStatus" class="status">Загрузка данных...</p>
+      </div>
+    </section>
+
+    <!-- ЭКРАН ВАЛЮТЫ -->
+    <section id="currencyView" class="stock-view hidden">
+      <button id="currencyBack" class="back-btn">← Назад</button>
+      <h2 id="currencyTitle">—</h2>
+      <p id="currencySubtitle" class="subtitle">—</p>
+
+      <div class="card">
+        <div class="period-switch" id="currencyPeriods">
+          <button class="period-btn" data-days="7">7Д</button>
+          <button class="period-btn" data-days="30">1М</button>
+          <button class="period-btn" data-days="180">6М</button>
+          <button class="period-btn active" data-days="365">1Г</button>
+        </div>
+        <canvas id="currencyChart"></canvas>
+        <p id="currencyChartStatus" class="status">Загрузка данных...</p>
+      </div>
+    </section>
+
+    <!-- ЭКРАН КРИПТЫ -->
+    <section id="cryptoView" class="stock-view hidden">
+      <button id="cryptoBack" class="back-btn">← Назад</button>
+      <h2 id="cryptoTitle">—</h2>
+      <p id="cryptoSubtitle" class="subtitle">—</p>
+
+      <div class="card">
+        <div class="period-switch" id="cryptoDetailPeriods">
+          <button class="period-btn" data-hours="24">24Ч</button>
+          <button class="period-btn" data-days="30">1М</button>
+          <button class="period-btn" data-days="180">6М</button>
+          <button class="period-btn active" data-days="365">1Г</button>
+        </div>
+        <canvas id="cryptoDetailChart"></canvas>
+        <p id="cryptoDetailStatus" class="status">Загрузка данных...</p>
       </div>
     </section>
 
