@@ -27,6 +27,7 @@ function toggleTheme() {
   localStorage.setItem('theme', isLight ? 'light' : 'dark');
   document.getElementById('themeIcon').textContent = isLight ? '☀️' : '🌙';
   
+  // Перерисовываем графики с новыми цветами
   if (!document.querySelector('.tab[data-tab="index"]').classList.contains('hidden')) {
     renderChart('index', 'IMOEX', { days: 365 });
   }
@@ -539,4 +540,44 @@ document.querySelectorAll('#cryptoPeriods .period-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#cryptoPeriods .period-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    renderCryptoChart(btn
+    renderCryptoChart(btn.dataset.hours ? { hours: 24 } : { days: parseInt(btn.dataset.days, 10) });
+  });
+});
+
+// ============================================
+// Поиск по акциям
+// ============================================
+function filterList(query, list) {
+  const q = query.trim().toLowerCase();
+  if (!q) return null;
+  return list.filter(item => {
+    const ticker = (item.ticker || '').toLowerCase();
+    const name = (item.name || '').toLowerCase();
+    return ticker.includes(q) || name.includes(q);
+  });
+}
+
+document.getElementById('stocksSearch')?.addEventListener('input', (e) => {
+  const q = e.target.value.trim();
+  if (!q) { renderStocksRows(allStocks.slice(0, 100)); return; }
+  const filtered = filterList(q, allStocks) || [];
+  renderStocksRows(filtered.slice(0, 100));
+});
+
+// ============================================
+// Lottie: бриллиант
+// ============================================
+if (typeof lottie !== 'undefined') {
+  lottie.loadAnimation({
+    container: document.getElementById('gemAnimation'),
+    renderer: 'svg',
+    loop: true,
+    autoplay: true,
+    path: 'gem.json',
+  });
+}
+
+// ============================================
+// Старт
+// ============================================
+switchTab('home');
