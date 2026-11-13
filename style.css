@@ -304,3 +304,11 @@ canvas { width: 100% !important; max-height: 260px; }
 }
 
 .hidden { display: none; }
+
+/* --- Анимация на экране поддержки --- */
+.support-animation {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 16px;
+  pointer-events: none;
+}
