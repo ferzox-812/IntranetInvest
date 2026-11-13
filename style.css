@@ -1,27 +1,77 @@
+/* --- Базовые стили и переменные темы --- */
+:root {
+  --bg-color: #000000;
+  --text-color: #ffffff;
+  --card-bg: #1c1c1e;
+  --card-border: rgba(255, 255, 255, 0.1);
+  --text-muted: #888888;
+  --grid-color: rgba(255, 255, 255, 0.05);
+  --btn-hover: rgba(255, 255, 255, 0.08);
+  --accent: #8b5cf6;
+}
+
+body.light-theme {
+  --bg-color: #f2f2f7;
+  --text-color: #000000;
+  --card-bg: #ffffff;
+  --card-border: rgba(0, 0, 0, 0.08);
+  --text-muted: #666666;
+  --grid-color: rgba(0, 0, 0, 0.05);
+  --btn-hover: rgba(0, 0, 0, 0.05);
+  --accent: #7c3aed;
+}
+
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 html, body {
   margin: 0;
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #000000 !important;
-  color: #ffffff !important;
+  background: var(--bg-color) !important;
+  color: var(--text-color) !important;
   min-height: 100vh;
+  transition: background 0.3s, color 0.3s;
 }
 
 body { padding: 16px 16px 24px; }
 
-header { margin-bottom: 16px; }
+/* --- Шапка --- */
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
 
 h1 { font-size: 22px; margin: 0 0 4px; font-weight: 600; }
 h2 { font-size: 20px; margin: 8px 0 4px; font-weight: 600; }
 .subtitle { margin: 0; font-size: 13px; opacity: 0.6; }
 
+/* --- Кнопка темы --- */
+.theme-toggle {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s;
+  padding: 0;
+  color: var(--text-color);
+}
+
+.theme-toggle:active { transform: scale(0.9); }
+
 .card {
-  background: #1c1c1e;
+  background: var(--card-bg);
   border-radius: 14px;
   padding: 16px;
   margin-bottom: 16px;
+  transition: background 0.3s;
 }
 
 canvas { width: 100% !important; max-height: 260px; }
@@ -33,14 +83,14 @@ canvas { width: 100% !important; max-height: 260px; }
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin-bottom: 12px; /* Уменьшили отступ, так как добавили кнопку новостей */
+  margin-bottom: 12px;
 }
 
 .home-tile {
-  background: #1c1c1e;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: 16px;
-  padding: 20px 12px; /* Немного уменьшили padding */
+  padding: 20px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -48,20 +98,13 @@ canvas { width: 100% !important; max-height: 260px; }
   gap: 8px;
   cursor: pointer;
   transition: transform 0.2s ease, background 0.2s ease;
-  min-height: 100px; /* Уменьшили высоту плиток */
-  color: #ffffff;
+  min-height: 100px;
+  color: var(--text-color);
   font-family: inherit;
 }
 
-.home-tile:hover {
-  transform: scale(0.96);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.home-tile:active {
-  transform: scale(0.92);
-  background: rgba(255, 255, 255, 0.15);
-}
+.home-tile:hover { transform: scale(0.96); background: var(--btn-hover); }
+.home-tile:active { transform: scale(0.92); background: var(--btn-hover); }
 
 .home-icon { font-size: 28px; line-height: 1; }
 .home-title { font-size: 13px; font-weight: 500; text-align: center; line-height: 1.2; }
@@ -81,34 +124,22 @@ canvas { width: 100% !important; max-height: 260px; }
 .news-tile .home-title { font-size: 15px; font-weight: 600; }
 
 /* --- Список новостей --- */
-.news-list {
-  display: flex;
-  flex-direction: column;
-}
+.news-list { display: flex; flex-direction: column; }
 
 .news-item {
   display: block;
   padding: 14px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid var(--card-border);
   text-decoration: none;
-  color: #ffffff;
+  color: var(--text-color);
   transition: opacity 0.15s;
 }
 
 .news-item:active { opacity: 0.6; }
 .news-item:last-child { border-bottom: none; }
 
-.news-title {
-  font-size: 14px;
-  line-height: 1.4;
-  margin-bottom: 6px;
-  font-weight: 500;
-}
-
-.news-date {
-  font-size: 11px;
-  opacity: 0.5;
-}
+.news-title { font-size: 14px; line-height: 1.4; margin-bottom: 6px; font-weight: 500; }
+.news-date { font-size: 11px; opacity: 0.5; }
 
 /* --- Рамка "Приобрести криптовалюту" --- */
 .crypto-buy-banner {
@@ -117,28 +148,23 @@ canvas { width: 100% !important; max-height: 260px; }
   gap: 12px;
   width: 100%;
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.08));
-  border: 1px solid #8b5cf6;
+  border: 1px solid var(--accent);
   border-radius: 14px;
   padding: 16px;
   margin-bottom: 0;
   cursor: pointer;
   font-family: inherit;
-  color: #ffffff;
+  color: var(--text-color);
   transition: transform 0.2s ease, background 0.15s;
   text-align: left;
 }
 
-.crypto-buy-banner:hover {
-  transform: scale(0.98);
-}
-.crypto-buy-banner:active {
-  transform: scale(0.96);
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(139, 92, 246, 0.12));
-}
+.crypto-buy-banner:hover { transform: scale(0.98); }
+.crypto-buy-banner:active { transform: scale(0.96); background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(139, 92, 246, 0.12)); }
 
 .crypto-buy-icon { font-size: 22px; line-height: 1; }
-.crypto-buy-text { flex: 1; font-size: 14px; font-weight: 600; color: #8b5cf6; }
-.crypto-buy-arrow { font-size: 18px; color: #8b5cf6; font-weight: 600; }
+.crypto-buy-text { flex: 1; font-size: 14px; font-weight: 600; color: var(--accent); }
+.crypto-buy-arrow { font-size: 18px; color: var(--accent); font-weight: 600; }
 
 /* --- Lottie: бриллиант --- */
 .gem-animation {
@@ -153,29 +179,29 @@ canvas { width: 100% !important; max-height: 260px; }
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #1c1c1e;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: 14px;
   padding: 18px 16px;
   margin-bottom: 12px;
   text-decoration: none;
-  color: #ffffff;
+  color: var(--text-color);
   transition: transform 0.15s, background 0.15s;
 }
 
 .p2p-option:hover { transform: scale(0.98); }
-.p2p-option:active { transform: scale(0.96); background: rgba(255, 255, 255, 0.1); }
+.p2p-option:active { transform: scale(0.96); background: var(--btn-hover); }
 
 .p2p-option-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
 .p2p-option-title { font-size: 15px; font-weight: 600; }
 .p2p-option-desc { font-size: 11px; opacity: 0.6; }
-.p2p-option-arrow { font-size: 18px; color: #8b5cf6; font-weight: 600; }
+.p2p-option-arrow { font-size: 18px; color: var(--accent); font-weight: 600; }
 
 /* --- Кнопка "Назад" --- */
 .back-btn {
   background: transparent;
   border: none;
-  color: #8b5cf6;
+  color: var(--accent);
   font-size: 15px;
   padding: 8px 0;
   cursor: pointer;
@@ -187,20 +213,20 @@ canvas { width: 100% !important; max-height: 260px; }
 /* --- Поиск --- */
 .search-input {
   width: 100%;
-  background: #000000;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--bg-color);
+  border: 1px solid var(--card-border);
   border-radius: 10px;
   padding: 10px 14px;
   font-size: 14px;
   font-family: inherit;
-  color: #ffffff;
+  color: var(--text-color);
   margin-bottom: 12px;
   outline: none;
   transition: border-color 0.15s;
 }
 
-.search-input:focus { border-color: #8b5cf6; }
-.search-input::placeholder { color: #888888; opacity: 0.7; }
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--text-muted); opacity: 0.7; }
 
 /* --- Переключатель периодов --- */
 .period-switch {
@@ -212,8 +238,8 @@ canvas { width: 100% !important; max-height: 260px; }
 
 .period-btn {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+  border: 1px solid var(--card-border);
+  color: var(--text-color);
   border-radius: 8px;
   padding: 6px 12px;
   font-size: 12px;
@@ -223,8 +249,8 @@ canvas { width: 100% !important; max-height: 260px; }
 }
 
 .period-btn.active {
-  background: #8b5cf6;
-  border-color: #8b5cf6;
+  background: var(--accent);
+  border-color: var(--accent);
   color: #ffffff;
 }
 
@@ -243,21 +269,22 @@ canvas { width: 100% !important; max-height: 260px; }
   opacity: 0.5;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 1px solid var(--card-border);
   padding-bottom: 8px;
   margin-bottom: 4px;
 }
 
 .stock-row {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--card-border);
   cursor: pointer;
   transition: background 0.15s;
   border-radius: 8px;
   padding: 10px 4px;
   margin: 0 -4px;
+  color: var(--text-color);
 }
 
-.stock-row:active { background: rgba(255, 255, 255, 0.1); }
+.stock-row:active { background: var(--btn-hover); }
 .stock-row:last-child { border-bottom: none; }
 
 .stock-ticker { font-weight: 600; }
@@ -269,7 +296,7 @@ canvas { width: 100% !important; max-height: 260px; }
 
 /* --- Футер --- */
 .footer {
-  border: 1px solid #8b5cf6;
+  border: 1px solid var(--accent);
   border-radius: 12px;
   padding: 12px 16px;
   margin-top: 8px;
@@ -281,8 +308,8 @@ canvas { width: 100% !important; max-height: 260px; }
   background: rgba(139, 92, 246, 0.05);
 }
 
-.footer-link { color: #8b5cf6; font-size: 13px; font-weight: 600; text-decoration: none; }
-.footer-sub { color: #8b5cf6; font-size: 11px; opacity: 0.7; font-weight: 400; }
+.footer-link { color: var(--accent); font-size: 13px; font-weight: 600; text-decoration: none; }
+.footer-sub { color: var(--accent); font-size: 11px; opacity: 0.7; font-weight: 400; }
 
 /* --- Экран бумаги --- */
 .stock-view {
@@ -291,7 +318,7 @@ canvas { width: 100% !important; max-height: 260px; }
   left: 0;
   right: 0;
   bottom: 0;
-  background: #000000;
+  background: var(--bg-color);
   padding: 16px 16px 24px;
   overflow-y: auto;
   z-index: 200;
