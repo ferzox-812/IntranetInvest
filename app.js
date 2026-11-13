@@ -27,7 +27,6 @@ function toggleTheme() {
   localStorage.setItem('theme', isLight ? 'light' : 'dark');
   document.getElementById('themeIcon').textContent = isLight ? '☀️' : '🌙';
   
-  // Перерисовываем графики с новыми цветами
   if (!document.querySelector('.tab[data-tab="index"]').classList.contains('hidden')) {
     renderChart('index', 'IMOEX', { days: 365 });
   }
@@ -121,6 +120,7 @@ function getChartOptions() {
 const SUBTITLES = {
   home: 'Главная',
   p2p: 'Приобрести криптовалюту',
+  support: 'Поддержать проект',
   stocks: 'Акции',
   index: 'Индекс Мосбиржи',
   dollar: 'Валюты',
@@ -562,6 +562,43 @@ document.getElementById('stocksSearch')?.addEventListener('input', (e) => {
   if (!q) { renderStocksRows(allStocks.slice(0, 100)); return; }
   const filtered = filterList(q, allStocks) || [];
   renderStocksRows(filtered.slice(0, 100));
+});
+
+// ============================================
+// Копирование адресов кошельков
+// ============================================
+document.querySelectorAll('.wallet-card').forEach(card => {
+  card.addEventListener('click', async () => {
+    const address = card.dataset.copy;
+    if (!address) return;
+
+    try {
+      await navigator.clipboard.writeText(address);
+    } catch (e) {
+      const textarea = document.createElement('textarea');
+      textarea.value = address;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
+
+    // Показываем галочку на 1.5 сек
+    const icon = card.querySelector('.wallet-copy-icon');
+    const originalIcon = icon.textContent;
+    icon.textContent = '✅';
+    icon.style.opacity = '1';
+    
+    // Эффект вибрации (если поддерживается)
+    if (tg.HapticFeedback) {
+      tg.HapticFeedback.notificationOccurred('success');
+    }
+
+    setTimeout(() => {
+      icon.textContent = originalIcon;
+      icon.style.opacity = '0.6';
+    }, 1500);
+  });
 });
 
 // ============================================
