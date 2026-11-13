@@ -27,14 +27,25 @@ function toggleTheme() {
   localStorage.setItem('theme', isLight ? 'light' : 'dark');
   document.getElementById('themeIcon').textContent = isLight ? '☀️' : '🌙';
   
-  if (!document.querySelector('.tab[data-tab="index"]').classList.contains('hidden')) renderChart('index', 'IMOEX', { days: 365 });
-  if (!document.querySelector('.tab[data-tab="stocks"]').classList.contains('hidden')) renderStocksList();
-  if (!document.querySelector('.tab[data-tab="dollar"]').classList.contains('hidden')) renderCurrencyList();
-  if (!document.querySelector('.tab[data-tab="crypto"]').classList.contains('hidden')) renderCryptoList();
-  
-  if (currentTicker && !document.getElementById('stockView').classList.contains('hidden')) renderChart('stock', currentTicker, { days: 365 });
-  if (currentCurrency && !document.getElementById('currencyView').classList.contains('hidden')) renderCurrencyChart(currentCurrency, { days: 365 });
-  if (currentCoin && !document.getElementById('cryptoView').classList.contains('hidden')) renderCryptoDetail(currentCoin, { days: 365 });
+  // Перерисовываем открытые графики
+  if (!document.querySelector('.tab[data-tab="index"]').classList.contains('hidden')) {
+    renderChart('index', 'IMOEX', { days: 365 });
+  }
+  if (!document.querySelector('.tab[data-tab="dollar"]').classList.contains('hidden')) {
+    renderCurrencyList();
+  }
+  if (!document.querySelector('.tab[data-tab="crypto"]').classList.contains('hidden')) {
+    renderCryptoList();
+  }
+  if (currentTicker && !document.getElementById('stockView').classList.contains('hidden')) {
+    renderChart('stock', currentTicker, { days: 365 });
+  }
+  if (currentCurrency && !document.getElementById('currencyView').classList.contains('hidden')) {
+    renderCurrencyChart(currentCurrency, { days: 365 });
+  }
+  if (currentCoin && !document.getElementById('cryptoView').classList.contains('hidden')) {
+    renderCryptoDetail(currentCoin, { days: 365 });
+  }
 }
 
 initTheme();
@@ -137,7 +148,7 @@ document.querySelectorAll('.crypto-buy-banner').forEach(banner => banner.addEven
 document.querySelectorAll('.back-btn[data-back]').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.back)));
 
 // ============================================
-// Акции
+// Акции (Список)
 // ============================================
 let allStocks = [];
 async function renderStocksList() {
@@ -175,7 +186,7 @@ function renderStocksRows(stocks) {
 }
 
 // ============================================
-// Экран акции
+// Экран Акции
 // ============================================
 let stockChartInstance = null;
 let currentTicker = null;
@@ -208,44 +219,16 @@ async function renderCurrencyList() {
       loadCurrencyHistory('EUR', { days: 7 }),
       loadCurrencyHistory('CNY', { days: 7 })
     ]);
-    
     const update = (data, priceId) => {
       const el = document.getElementById(priceId);
       if (data.values.length > 0) el.textContent = `${data.values[data.values.length - 1].toFixed(4)} ₽`;
     };
     update(usd, 'usdPriceList'); update(eur, 'eurPriceList'); update(cny, 'cnyPriceList');
-  } catch (e) {
-    console.error('Ошибка списка валют:', e);
-  }
+  } catch (e) { console.error('Ошибка списка валют:', e); }
 }
 
 document.querySelectorAll('#dollarList .stock-row').forEach(row => {
   row.addEventListener('click', () => openCurrencyView(row.dataset.currency));
-});
-
-// ============================================
-// Крипта (Список)
-// ============================================
-async function renderCryptoList() {
-  try {
-    const [btc, gram, eth] = await Promise.all([
-      loadCryptoHistory('bitcoin', { days: 7 }),
-      loadCryptoHistory('gram', { days: 7 }),
-      loadCryptoHistory('ethereum', { days: 7 })
-    ]);
-    
-    const update = (data, priceId) => {
-      const el = document.getElementById(priceId);
-      if (data.values.length > 0) el.textContent = `$${data.values[data.values.length - 1].toFixed(2)}`;
-    };
-    update(btc, 'btcPriceList'); update(gram, 'tonPriceList'); update(eth, 'ethPriceList');
-  } catch (e) {
-    console.error('Ошибка списка крипты:', e);
-  }
-}
-
-document.querySelectorAll('#cryptoList .stock-row').forEach(row => {
-  row.addEventListener('click', () => openCryptoView(row.dataset.coin));
 });
 
 // ============================================
@@ -271,6 +254,28 @@ function closeCurrencyView() {
 }
 
 document.getElementById('currencyBack').addEventListener('click', closeCurrencyView);
+
+// ============================================
+// Крипта (Список)
+// ============================================
+async function renderCryptoList() {
+  try {
+    const [btc, gram, eth] = await Promise.all([
+      loadCryptoHistory('bitcoin', { days: 7 }),
+      loadCryptoHistory('gram', { days: 7 }),
+      loadCryptoHistory('ethereum', { days: 7 })
+    ]);
+    const update = (data, priceId) => {
+      const el = document.getElementById(priceId);
+      if (data.values.length > 0) el.textContent = `$${data.values[data.values.length - 1].toFixed(2)}`;
+    };
+    update(btc, 'btcPriceList'); update(gram, 'tonPriceList'); update(eth, 'ethPriceList');
+  } catch (e) { console.error('Ошибка списка крипты:', e); }
+}
+
+document.querySelectorAll('#cryptoList .stock-row').forEach(row => {
+  row.addEventListener('click', () => openCryptoView(row.dataset.coin));
+});
 
 // ============================================
 // Экран Крипты
