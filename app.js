@@ -46,10 +46,7 @@ function getTrendColor(values) {
 const CHART_OPTIONS = {
   responsive: true,
   maintainAspectRatio: false,
-  interaction: {
-    mode: 'index',
-    intersect: false,
-  },
+  interaction: { mode: 'index', intersect: false },
   plugins: {
     legend: { display: false },
     tooltip: {
@@ -73,22 +70,11 @@ const CHART_OPTIONS = {
     }
   },
   scales: {
-    x: {
-      display: false, // Прячем ось X (даты и так понятны)
-      grid: { display: false }
-    },
+    x: { display: false, grid: { display: false } },
     y: {
       border: { display: false },
-      grid: {
-        color: 'rgba(255, 255, 255, 0.05)', // Еле заметная сетка
-        drawTicks: false,
-      },
-      ticks: {
-        color: '#888888',
-        padding: 10,
-        font: { size: 10 },
-        maxTicksLimit: 5, // Не засоряем ось цифрами
-      }
+      grid: { color: 'rgba(255, 255, 255, 0.05)', drawTicks: false },
+      ticks: { color: '#888888', padding: 10, font: { size: 10 }, maxTicksLimit: 5 }
     }
   }
 };
@@ -98,6 +84,7 @@ const CHART_OPTIONS = {
 // ============================================
 const SUBTITLES = {
   home: 'Главная',
+  news: 'Новости экономики',
   p2p: 'Приобрести криптовалюту',
   stocks: 'Акции',
   index: 'Индекс Мосбиржи',
@@ -116,6 +103,7 @@ function switchTab(name) {
   if (name === 'stocks' && !LOADED.stocks) { LOADED.stocks = true; renderStocksList(); }
   if (name === 'dollar' && !LOADED.dollar) { LOADED.dollar = true; renderDollarChart({ days: 365 }); }
   if (name === 'crypto' && !LOADED.crypto) { LOADED.crypto = true; renderCryptoChart({ days: 365 }); }
+  if (name === 'news' && !LOADED.news) { LOADED.news = true; renderNewsList(); }
 }
 
 document.querySelectorAll('.home-tile').forEach(tile => {
@@ -129,6 +117,28 @@ document.querySelectorAll('.crypto-buy-banner').forEach(banner => {
 document.querySelectorAll('.back-btn[data-back]').forEach(btn => {
   btn.addEventListener('click', () => switchTab(btn.dataset.back));
 });
+
+// ============================================
+// Новости
+// ============================================
+async function renderNewsList() {
+  const listEl = document.getElementById('newsList');
+  try {
+    const items = await fetchJSONViaProxy('interfax/business');
+    if (!items || items.length === 0) throw new Error('Нет новостей');
+
+    listEl.innerHTML = items.map(item => {
+      const date = new Date(item.pubDate).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      return `<a href="${item.link}" target="_blank" class="news-item">
+        <div class="news-title">${item.title}</div>
+        <div class="news-date">${date}</div>
+      </a>`;
+    }).join('');
+  } catch (e) {
+    console.error(e);
+    listEl.innerHTML = `<p class="status">Ошибка: ${e.message}</p>`;
+  }
+}
 
 // ============================================
 // Акции
@@ -272,16 +282,16 @@ async function renderChart(target, secid, period) {
           borderColor: color.border,
           backgroundColor: gradient,
           fill: true,
-          tension: 0.3, // Плавные изгибы
-          pointRadius: 0, // Скрываем точки
-          pointHoverRadius: 4, // Показываем точку при наведении
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 4,
           pointHoverBackgroundColor: color.border,
           pointHoverBorderColor: '#fff',
           pointHoverBorderWidth: 2,
           borderWidth: 2,
         }]
       },
-      options: CHART_OPTIONS // Применяем общие настройки
+      options: CHART_OPTIONS
     });
 
     if (target === 'index') window.__imoexChartInstance = chart;
