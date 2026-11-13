@@ -9,6 +9,43 @@ tg.ready();
 tg.expand();
 
 // ============================================
+// Тема (Светлая / Тёмная)
+// ============================================
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'light') {
+    document.body.classList.add('light-theme');
+    document.getElementById('themeIcon').textContent = '☀️';
+  } else {
+    document.body.classList.remove('light-theme');
+    document.getElementById('themeIcon').textContent = '🌙';
+  }
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-theme');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  document.getElementById('themeIcon').textContent = isLight ? '☀️' : '🌙';
+  
+  // Перерисовываем графики с новыми цветами
+  if (!document.querySelector('.tab[data-tab="index"]').classList.contains('hidden')) {
+    renderChart('index', 'IMOEX', { days: 365 });
+  }
+  if (!document.querySelector('.tab[data-tab="dollar"]').classList.contains('hidden')) {
+    renderDollarChart({ days: 365 });
+  }
+  if (!document.querySelector('.tab[data-tab="crypto"]').classList.contains('hidden')) {
+    renderCryptoChart({ days: 365 });
+  }
+  if (currentTicker && !document.getElementById('stockView').classList.contains('hidden')) {
+    renderChart('stock', currentTicker, { days: 365 });
+  }
+}
+
+initTheme();
+document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+// ============================================
 // Прокси-запросы
 // ============================================
 async function fetchViaProxy(targetUrl) {
@@ -41,43 +78,42 @@ function getTrendColor(values) {
 }
 
 // ============================================
-// Общие настройки графиков (для красоты)
+// Настройки графиков (зависят от темы)
 // ============================================
-const CHART_OPTIONS = {
-  responsive: true,
-  maintainAspectRatio: false,
-  interaction: { mode: 'index', intersect: false },
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      backgroundColor: 'rgba(28, 28, 30, 0.9)',
-      titleColor: '#ffffff',
-      bodyColor: '#ffffff',
-      borderColor: 'rgba(255,255,255,0.1)',
-      borderWidth: 1,
-      padding: 10,
-      displayColors: false,
-      callbacks: {
-        label: function(context) {
-          let label = context.dataset.label || '';
-          if (label) label += ': ';
-          if (context.parsed.y !== null) {
-            label += context.parsed.y.toFixed(2);
-          }
-          return label;
-        }
+function getChartOptions() {
+  const isLight = document.body.classList.contains('light-theme');
+  const gridColor = isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.05)';
+  const textColor = isLight ? '#666666' : '#888888';
+  const tooltipBg = isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(28, 28, 30, 0.9)';
+  const tooltipColor = isLight ? '#000000' : '#ffffff';
+  const tooltipBorder = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
+
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: tooltipBg,
+        titleColor: tooltipColor,
+        bodyColor: tooltipColor,
+        borderColor: tooltipBorder,
+        borderWidth: 1,
+        padding: 10,
+        displayColors: false,
+      }
+    },
+    scales: {
+      x: { display: false, grid: { display: false } },
+      y: {
+        border: { display: false },
+        grid: { color: gridColor, drawTicks: false },
+        ticks: { color: textColor, padding: 10, font: { size: 10 }, maxTicksLimit: 5 }
       }
     }
-  },
-  scales: {
-    x: { display: false, grid: { display: false } },
-    y: {
-      border: { display: false },
-      grid: { color: 'rgba(255, 255, 255, 0.05)', drawTicks: false },
-      ticks: { color: '#888888', padding: 10, font: { size: 10 }, maxTicksLimit: 5 }
-    }
-  }
-};
+  };
+}
 
 // ============================================
 // Навигация
@@ -281,17 +317,13 @@ async function renderChart(target, secid, period) {
           data: values,
           borderColor: color.border,
           backgroundColor: gradient,
-          fill: true,
-          tension: 0.3,
-          pointRadius: 0,
-          pointHoverRadius: 4,
-          pointHoverBackgroundColor: color.border,
-          pointHoverBorderColor: '#fff',
-          pointHoverBorderWidth: 2,
+          fill: true, tension: 0.3, pointRadius: 0,
+          pointHoverRadius: 4, pointHoverBackgroundColor: color.border,
+          pointHoverBorderColor: '#fff', pointHoverBorderWidth: 2,
           borderWidth: 2,
         }]
       },
-      options: CHART_OPTIONS
+      options: getChartOptions()
     });
 
     if (target === 'index') window.__imoexChartInstance = chart;
@@ -378,7 +410,7 @@ function drawCurrencyChart(canvasId, statusId, data, label, currentInstance) {
         borderWidth: 2,
       }]
     },
-    options: CHART_OPTIONS
+    options: getChartOptions()
   });
 
   const last = data.values[data.values.length - 1];
@@ -486,7 +518,7 @@ function drawCryptoChart(canvasId, statusId, data, label, currentInstance) {
         borderWidth: 2,
       }]
     },
-    options: CHART_OPTIONS
+    options: getChartOptions()
   });
 
   const last = data.values[data.values.length - 1];
