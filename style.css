@@ -75,6 +75,18 @@ canvas {
   font-family: inherit;
 }
 
+/* Вот этот блок добавит "прогиб" при наведении */
+.home-tile:hover {
+  transform: scale(0.96); /* Плитка сжимается на 4% */
+  background: rgba(255, 255, 255, 0.08); /* Немного светлеет */
+}
+
+/* А этот эффект останется для нажатия (на телефонах) */
+.home-tile:active {
+  transform: scale(0.92); /* Сжимается сильнее при клике */
+  background: rgba(255, 255, 255, 0.15);
+}
+
 .home-tile:active {
   transform: scale(0.97);
   background: rgba(255, 255, 255, 0.1);
