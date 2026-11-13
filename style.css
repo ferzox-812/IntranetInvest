@@ -109,52 +109,7 @@ canvas { width: 100% !important; max-height: 260px; }
 .home-icon { font-size: 28px; line-height: 1; }
 .home-title { font-size: 13px; font-weight: 500; text-align: center; line-height: 1.2; }
 
-/* --- Кнопка Новостей (на всю ширину) --- */
-.news-tile {
-  width: 100%;
-  flex-direction: row;
-  gap: 12px;
-  padding: 16px;
-  min-height: auto;
-  margin-bottom: 12px;
-  justify-content: flex-start;
-}
-
-.news-tile .home-icon { font-size: 24px; }
-.news-tile .home-title { font-size: 15px; font-weight: 600; }
-
-/* --- Список новостей --- */
-.news-list { display: flex; flex-direction: column; }
-
-.news-item {
-  display: block;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--card-border);
-  text-decoration: none;
-  color: var(--text-color);
-  transition: opacity 0.15s;
-  cursor: pointer;
-}
-
-.news-item:active { opacity: 0.6; }
-.news-item:last-child { border-bottom: none; }
-
-.news-title { font-size: 14px; line-height: 1.4; margin-bottom: 6px; font-weight: 500; }
-.news-date { font-size: 11px; opacity: 0.5; }
-
-/* --- Читалка (экран статьи) --- */
-#articleContent p {
-  margin-bottom: 14px;
-  line-height: 1.7;
-  font-size: 15px;
-  opacity: 0.9;
-}
-
-#articleContent p:last-child { margin-bottom: 0; }
-
-#articleTitle { font-size: 20px; line-height: 1.3; font-weight: 600; }
-
-/* --- Рамка "Приобрести криптовалюту" --- */
+/* --- Рамка "Приобрести криптовалюту" / "Поддержать проект" --- */
 .crypto-buy-banner {
   display: flex;
   align-items: center;
@@ -187,28 +142,36 @@ canvas { width: 100% !important; max-height: 260px; }
   pointer-events: none;
 }
 
-/* --- P2P-опции --- */
-.p2p-option {
+/* --- P2P-опции и кошельки --- */
+.p2p-option, .wallet-card {
   display: flex;
   align-items: center;
   gap: 12px;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: 14px;
-  padding: 18px 16px;
+  padding: 16px;
   margin-bottom: 12px;
   text-decoration: none;
   color: var(--text-color);
   transition: transform 0.15s, background 0.15s;
 }
 
-.p2p-option:hover { transform: scale(0.98); }
-.p2p-option:active { transform: scale(0.96); background: var(--btn-hover); }
+.wallet-card { cursor: pointer; position: relative; }
+
+.p2p-option:hover, .wallet-card:hover { transform: scale(0.98); }
+.p2p-option:active, .wallet-card:active { transform: scale(0.96); background: var(--btn-hover); }
 
 .p2p-option-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
 .p2p-option-title { font-size: 15px; font-weight: 600; }
 .p2p-option-desc { font-size: 11px; opacity: 0.6; }
 .p2p-option-arrow { font-size: 18px; color: var(--accent); font-weight: 600; }
+
+/* --- Кошельки (Поддержка) --- */
+.wallet-info { flex: 1; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+.wallet-label { font-size: 12px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; }
+.wallet-address { font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; word-break: break-all; opacity: 0.8; line-height: 1.4; }
+.wallet-copy-icon { font-size: 18px; opacity: 0.6; transition: opacity 0.15s; }
 
 /* --- Кнопка "Назад" --- */
 .back-btn {
