@@ -27,7 +27,6 @@ function toggleTheme() {
   localStorage.setItem('theme', isLight ? 'light' : 'dark');
   document.getElementById('themeIcon').textContent = isLight ? '☀️' : '🌙';
   
-  // Перерисовываем графики с новыми цветами
   if (!document.querySelector('.tab[data-tab="index"]').classList.contains('hidden')) {
     renderChart('index', 'IMOEX', { days: 365 });
   }
@@ -121,6 +120,7 @@ function getChartOptions() {
 const SUBTITLES = {
   home: 'Главная',
   news: 'Новости экономики',
+  article: 'Чтение',
   p2p: 'Приобрести криптовалюту',
   stocks: 'Акции',
   index: 'Индекс Мосбиржи',
@@ -155,7 +155,7 @@ document.querySelectorAll('.back-btn[data-back]').forEach(btn => {
 });
 
 // ============================================
-// Новости (с Instant View)
+// Новости
 // ============================================
 async function renderNewsList() {
   const listEl = document.getElementById('newsList');
@@ -165,21 +165,18 @@ async function renderNewsList() {
 
     listEl.innerHTML = items.map((item, index) => {
       const date = new Date(item.pubDate).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-      // Используем data-index для идентификации новости
       return `<div class="news-item" data-index="${index}">
         <div class="news-title">${item.title}</div>
         <div class="news-date">${date}</div>
       </div>`;
     }).join('');
 
-    // Навешиваем обработчики на каждую новость
     listEl.querySelectorAll('.news-item').forEach(el => {
       el.addEventListener('click', () => {
         const idx = parseInt(el.dataset.index, 10);
         const newsItem = items[idx];
         if (newsItem && newsItem.link) {
-          // Открываем ссылку внутри Telegram с попыткой Instant View
-          tg.openLink(newsItem.link, { tryInstantView: true });
+          openArticle(newsItem.title, newsItem.link);
         }
       });
     });
@@ -187,6 +184,30 @@ async function renderNewsList() {
   } catch (e) {
     console.error(e);
     listEl.innerHTML = `<p class="status">Ошибка: ${e.message}</p>`;
+  }
+}
+
+// ============================================
+// Читалка статьи
+// ============================================
+async function openArticle(title, url) {
+  switchTab('article');
+  document.getElementById('articleTitle').textContent = title;
+  const contentEl = document.getElementById('articleContent');
+  contentEl.innerHTML = '<p class="status">Загрузка текста...</p>';
+
+  try {
+    const article = await fetchJSONViaProxy(`interfax/article?articleUrl=${encodeURIComponent(url)}`);
+    
+    if (!article || !article.content || article.content.length === 0) {
+      throw new Error('Не удалось загрузить текст');
+    }
+
+    contentEl.innerHTML = article.content.map(p => `<p style="margin-bottom: 12px; line-height: 1.6; font-size: 15px;">${p}</p>`).join('');
+
+  } catch (e) {
+    console.error(e);
+    contentEl.innerHTML = `<p class="status">Ошибка: ${e.message}. <a href="${url}" target="_blank" style="color: #8b5cf6;">Открыть в браузере</a></p>`;
   }
 }
 
