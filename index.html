@@ -10,8 +10,15 @@
 <body>
 
   <header>
-    <h1>IntranetInvest</h1>
-    <p class="subtitle" id="pageSubtitle">Главная</p>
+    <div class="header-content">
+      <div>
+        <h1>IntranetInvest</h1>
+        <p class="subtitle" id="pageSubtitle">Главная</p>
+      </div>
+      <button id="themeToggle" class="theme-toggle" aria-label="Переключить тему">
+        <span id="themeIcon">🌙</span>
+      </button>
+    </div>
   </header>
 
   <main id="content">
@@ -37,7 +44,6 @@
         </button>
       </div>
 
-      <!-- НОВАЯ КНОПКА: НОВОСТИ -->
       <button class="home-tile news-tile" data-target="news">
         <span class="home-icon">📰</span>
         <span class="home-title">Новости экономики</span>
@@ -101,13 +107,7 @@
     <section class="tab hidden" data-tab="stocks">
       <button class="back-btn" data-back="home">← Назад</button>
       <div class="card">
-        <input
-          type="text"
-          class="search-input"
-          id="stocksSearch"
-          placeholder="Поиск: тикер или название..."
-          autocomplete="off"
-        >
+        <input type="text" class="search-input" id="stocksSearch" placeholder="Поиск: тикер или название..." autocomplete="off">
         <div class="list-header">
           <span>Тикер</span>
           <span>Цена</span>
