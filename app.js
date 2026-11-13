@@ -27,25 +27,14 @@ function toggleTheme() {
   localStorage.setItem('theme', isLight ? 'light' : 'dark');
   document.getElementById('themeIcon').textContent = isLight ? '☀️' : '🌙';
   
-  // Перерисовываем открытые графики
-  if (!document.querySelector('.tab[data-tab="index"]').classList.contains('hidden')) {
-    renderChart('index', 'IMOEX', { days: 365 });
-  }
-  if (!document.querySelector('.tab[data-tab="dollar"]').classList.contains('hidden')) {
-    renderCurrencyList();
-  }
-  if (!document.querySelector('.tab[data-tab="crypto"]').classList.contains('hidden')) {
-    renderCryptoList();
-  }
-  if (currentTicker && !document.getElementById('stockView').classList.contains('hidden')) {
-    renderChart('stock', currentTicker, { days: 365 });
-  }
-  if (currentCurrency && !document.getElementById('currencyView').classList.contains('hidden')) {
-    renderCurrencyChart(currentCurrency, { days: 365 });
-  }
-  if (currentCoin && !document.getElementById('cryptoView').classList.contains('hidden')) {
-    renderCryptoDetail(currentCoin, { days: 365 });
-  }
+  if (!document.querySelector('.tab[data-tab="index"]').classList.contains('hidden')) renderChart('index', 'IMOEX', { days: 365 });
+  if (!document.querySelector('.tab[data-tab="stocks"]').classList.contains('hidden')) renderStocksList();
+  if (!document.querySelector('.tab[data-tab="dollar"]').classList.contains('hidden')) renderCurrencyList();
+  if (!document.querySelector('.tab[data-tab="crypto"]').classList.contains('hidden')) renderCryptoList();
+  
+  if (currentTicker && !document.getElementById('stockView').classList.contains('hidden')) renderChart('stock', currentTicker, { days: 365 });
+  if (currentCurrency && !document.getElementById('currencyView').classList.contains('hidden')) renderCurrencyChart(currentCurrency, { days: 365 });
+  if (currentCoin && !document.getElementById('cryptoView').classList.contains('hidden')) renderCryptoDetail(currentCoin, { days: 365 });
 }
 
 initTheme();
@@ -456,10 +445,11 @@ document.querySelectorAll('.wallet-card').forEach(card => card.addEventListener(
 }));
 
 // ============================================
-// Lottie
+// Lottie анимации
 // ============================================
 if (typeof lottie !== 'undefined') {
   lottie.loadAnimation({ container: document.getElementById('gemAnimation'), renderer: 'svg', loop: true, autoplay: true, path: 'gem.json' });
+  lottie.loadAnimation({ container: document.getElementById('supportAnimation'), renderer: 'svg', loop: true, autoplay: true, path: 'support.json' });
 }
 
 // ============================================
