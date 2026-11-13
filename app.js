@@ -155,7 +155,7 @@ document.querySelectorAll('.back-btn[data-back]').forEach(btn => {
 });
 
 // ============================================
-// Новости
+// Новости (с Instant View)
 // ============================================
 async function renderNewsList() {
   const listEl = document.getElementById('newsList');
@@ -163,13 +163,27 @@ async function renderNewsList() {
     const items = await fetchJSONViaProxy('interfax/business');
     if (!items || items.length === 0) throw new Error('Нет новостей');
 
-    listEl.innerHTML = items.map(item => {
+    listEl.innerHTML = items.map((item, index) => {
       const date = new Date(item.pubDate).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-      return `<a href="${item.link}" target="_blank" class="news-item">
+      // Используем data-index для идентификации новости
+      return `<div class="news-item" data-index="${index}">
         <div class="news-title">${item.title}</div>
         <div class="news-date">${date}</div>
-      </a>`;
+      </div>`;
     }).join('');
+
+    // Навешиваем обработчики на каждую новость
+    listEl.querySelectorAll('.news-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const idx = parseInt(el.dataset.index, 10);
+        const newsItem = items[idx];
+        if (newsItem && newsItem.link) {
+          // Открываем ссылку внутри Telegram с попыткой Instant View
+          tg.openLink(newsItem.link, { tryInstantView: true });
+        }
+      });
+    });
+
   } catch (e) {
     console.error(e);
     listEl.innerHTML = `<p class="status">Ошибка: ${e.message}</p>`;
