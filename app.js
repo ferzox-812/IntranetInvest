@@ -452,15 +452,61 @@ document.getElementById('stocksSearch')?.addEventListener('input', (e) => {
 // ============================================
 // Копирование кошельков
 // ============================================
-document.querySelectorAll('.wallet-card').forEach(card => card.addEventListener('click', async () => {
-  const address = card.dataset.copy;
-  if (!address) return;
-  try { await navigator.clipboard.writeText(address); } catch (e) { const t = document.createElement('textarea'); t.value = address; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); }
-  const icon = card.querySelector('.wallet-copy-icon');
-  const orig = icon.textContent;
-  icon.textContent = '✅'; icon.style.opacity = '1';
-  if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-  setTimeout(() => { icon.textContent = orig; icon.style.opacity = '0.6'; }, 1500);
+// ============================================
+// Кошельки: копирование и эффект "магнита"
+// ============================================
+document.querySelectorAll('.wallet-card').forEach(card => {
+  
+  // 1. Логика копирования при клике
+  card.addEventListener('click', async () => {
+    const address = card.dataset.copy;
+    if (!address) return;
+    
+    try { 
+      await navigator.clipboard.writeText(address); 
+    } catch (e) { 
+      const t = document.createElement('textarea'); 
+      t.value = address; 
+      document.body.appendChild(t); 
+      t.select(); 
+      document.execCommand('copy'); 
+      document.body.removeChild(t); 
+    }
+    
+    const icon = card.querySelector('.wallet-copy-icon');
+    const orig = icon.textContent;
+    icon.textContent = '✅'; 
+    icon.style.opacity = '1';
+    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    
+    setTimeout(() => { 
+      icon.textContent = orig; 
+      icon.style.opacity = '0.6'; 
+    }, 1500);
+  });
+
+  // 2. Эффект "магнита" при наведении (только для устройств с мышью)
+  card.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left; // Позиция X внутри карточки
+    const y = e.clientY - rect.top;  // Позиция Y внутри карточки
+    
+    // Вычисляем сдвиг (чем ближе к краю, тем сильнее сдвиг)
+    // Максимальный сдвиг — 5 пикселей
+    const moveX = (x - rect.width / 2) / 10;
+    const moveY = (y - rect.height / 2) / 10;
+    
+    // Применяем трансформацию (сдвиг + легкое уменьшение)
+    card.style.transform = `scale(0.98) translate(${moveX}px, ${moveY}px)`;
+    card.style.transition = 'transform 0.1s ease'; // Быстрая реакция
+  });
+
+  // Возвращаем в исходное состояние, когда мышка уходит
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = 'scale(1) translate(0, 0)';
+    card.style.transition = 'transform 0.3s ease'; // Плавный возврат
+  });
+});
 }));
 
 // ============================================
