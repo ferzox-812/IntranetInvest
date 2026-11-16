@@ -78,7 +78,7 @@ canvas { width: 100% !important; max-height: 260px; }
 
 .status { font-size: 12px; opacity: 0.6; margin: 8px 0 0; text-align: center; }
 
-/* --- Главный экран: плитки с градиентом --- */
+/* --- Главный экран: плитки с разливающимся градиентом --- */
 .home-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -87,8 +87,13 @@ canvas { width: 100% !important; max-height: 260px; }
 }
 
 .home-tile {
-  /* Красивый градиент из темного в легкий фиолетовый */
-  background: linear-gradient(135deg, #1c1c1e 0%, rgba(139, 92, 246, 0.15) 100%);
+  /* Градиент по бокам: фиолетовый -> темный центр -> фиолетовый */
+  background: linear-gradient(90deg, 
+    rgba(139, 92, 246, 0.25) 0%, 
+    rgba(28, 28, 30, 1) 25%, 
+    rgba(28, 28, 30, 1) 75%, 
+    rgba(139, 92, 246, 0.25) 100%
+  );
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   padding: 20px 12px;
@@ -104,10 +109,15 @@ canvas { width: 100% !important; max-height: 260px; }
   font-family: inherit;
 }
 
-/* Прогиб и свечение при наведении */
+/* Прогиб и усиление свечения при наведении */
 .home-tile:hover {
   transform: scale(0.96);
-  background: linear-gradient(135deg, #1c1c1e 0%, rgba(139, 92, 246, 0.3) 100%);
+  background: linear-gradient(90deg, 
+    rgba(139, 92, 246, 0.4) 0%, 
+    rgba(28, 28, 30, 1) 25%, 
+    rgba(28, 28, 30, 1) 75%, 
+    rgba(139, 92, 246, 0.4) 100%
+  );
   border-color: rgba(139, 92, 246, 0.5);
 }
 
@@ -118,14 +128,24 @@ canvas { width: 100% !important; max-height: 260px; }
 .home-icon { font-size: 28px; line-height: 1; }
 .home-title { font-size: 13px; font-weight: 500; text-align: center; line-height: 1.2; }
 
-/* --- Градиенты для светлой темы --- */
+/* --- Светлая тема для плиток --- */
 body.light-theme .home-tile {
-  background: linear-gradient(135deg, #ffffff 0%, rgba(139, 92, 246, 0.15) 100%);
+  background: linear-gradient(90deg, 
+    rgba(139, 92, 246, 0.2) 0%, 
+    rgba(255, 255, 255, 1) 25%, 
+    rgba(255, 255, 255, 1) 75%, 
+    rgba(139, 92, 246, 0.2) 100%
+  );
   border-color: rgba(0, 0, 0, 0.05);
 }
 
 body.light-theme .home-tile:hover {
-  background: linear-gradient(135deg, #ffffff 0%, rgba(139, 92, 246, 0.25) 100%);
+  background: linear-gradient(90deg, 
+    rgba(139, 92, 246, 0.35) 0%, 
+    rgba(255, 255, 255, 1) 25%, 
+    rgba(255, 255, 255, 1) 75%, 
+    rgba(139, 92, 246, 0.35) 100%
+  );
   border-color: rgba(139, 92, 246, 0.4);
 }
 
@@ -135,7 +155,6 @@ body.light-theme .home-tile:hover {
   align-items: center;
   gap: 12px;
   width: 100%;
-  /* Насыщенный фиолетовый градиент */
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.25) 100%);
   border: 1px solid var(--accent);
   border-radius: 14px;
