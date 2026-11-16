@@ -87,7 +87,6 @@ canvas { width: 100% !important; max-height: 260px; }
 }
 
 .home-tile {
-  /* Градиент по бокам: фиолетовый -> темный центр -> фиолетовый */
   background: linear-gradient(90deg, 
     rgba(139, 92, 246, 0.25) 0%, 
     rgba(28, 28, 30, 1) 25%, 
@@ -109,7 +108,6 @@ canvas { width: 100% !important; max-height: 260px; }
   font-family: inherit;
 }
 
-/* Прогиб и усиление свечения при наведении */
 .home-tile:hover {
   transform: scale(0.96);
   background: linear-gradient(90deg, 
@@ -125,10 +123,8 @@ canvas { width: 100% !important; max-height: 260px; }
   transform: scale(0.92);
 }
 
-.home-icon { font-size: 28px; line-height: 1; }
 .home-title { font-size: 13px; font-weight: 500; text-align: center; line-height: 1.2; }
 
-/* --- Светлая тема для плиток --- */
 body.light-theme .home-tile {
   background: linear-gradient(90deg, 
     rgba(139, 92, 246, 0.2) 0%, 
@@ -147,6 +143,22 @@ body.light-theme .home-tile:hover {
     rgba(139, 92, 246, 0.35) 100%
   );
   border-color: rgba(139, 92, 246, 0.4);
+}
+
+/* --- PNG-иконки --- */
+.home-icon-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.banner-icon-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  margin-right: 12px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 /* --- Рамка "Приобрести криптовалюту" / "Поддержать проект" --- */
@@ -170,7 +182,6 @@ body.light-theme .home-tile:hover {
 .crypto-buy-banner:hover { transform: scale(0.98); }
 .crypto-buy-banner:active { transform: scale(0.96); background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.4) 100%); }
 
-.crypto-buy-icon { font-size: 22px; line-height: 1; }
 .crypto-buy-text { flex: 1; font-size: 14px; font-weight: 600; color: var(--accent); }
 .crypto-buy-arrow { font-size: 18px; color: var(--accent); font-weight: 600; }
 
@@ -301,14 +312,13 @@ body.light-theme .home-tile:hover {
 .stock-row {
   border-bottom: 1px solid var(--card-border);
   cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease; /* Прогиб */
+  transition: transform 0.2s ease, background 0.2s ease;
   border-radius: 8px;
   padding: 10px 4px;
   margin: 0 -4px;
   color: var(--text-color);
 }
 
-/* Прогибание строк при наведении */
 .stock-row:hover { transform: scale(0.98); background: var(--btn-hover); }
 .stock-row:active { transform: scale(0.96); background: var(--btn-hover); }
 
