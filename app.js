@@ -69,7 +69,7 @@ function getTrendColor(values) {
 }
 
 // ============================================
-// Настройки графиков (с красивым тултипом)
+// Настройки графиков (с компактным тултипом)
 // ============================================
 function getChartOptions() {
   const isLight = document.body.classList.contains('light-theme');
@@ -90,14 +90,14 @@ function getChartOptions() {
       tooltip: {
         backgroundColor: tooltipBg,
         titleColor: titleColor,
-        titleFont: { size: 12, weight: '400' },
-        titleMarginBottom: 6,
+        titleFont: { size: 11, weight: '500' }, // Уменьшенный шрифт даты
+        titleMarginBottom: 4,
         bodyColor: bodyColor,
-        bodyFont: { size: 16, weight: '700' },
+        bodyFont: { size: 14, weight: '700' }, // Уменьшенный шрифт значения
         borderColor: tooltipBorder,
         borderWidth: 1,
-        padding: 12,
-        cornerRadius: 12,
+        padding: 8, // Компактные отступы
+        cornerRadius: 8, // Мягкие, но не огромные углы
         displayColors: false,
         callbacks: {
           label: function(context) {
