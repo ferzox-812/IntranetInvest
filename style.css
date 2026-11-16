@@ -78,7 +78,7 @@ canvas { width: 100% !important; max-height: 260px; }
 
 .status { font-size: 12px; opacity: 0.6; margin: 8px 0 0; text-align: center; }
 
-/* --- Главный экран: плитки --- */
+/* --- Главный экран: плитки с градиентом --- */
 .home-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -87,8 +87,9 @@ canvas { width: 100% !important; max-height: 260px; }
 }
 
 .home-tile {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  /* Красивый градиент из темного в легкий фиолетовый */
+  background: linear-gradient(135deg, #1c1c1e 0%, rgba(139, 92, 246, 0.15) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   padding: 20px 12px;
   display: flex;
@@ -97,17 +98,36 @@ canvas { width: 100% !important; max-height: 260px; }
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
   min-height: 100px;
   color: var(--text-color);
   font-family: inherit;
 }
 
-.home-tile:hover { transform: scale(0.96); background: var(--btn-hover); }
-.home-tile:active { transform: scale(0.92); background: var(--btn-hover); }
+/* Прогиб и свечение при наведении */
+.home-tile:hover {
+  transform: scale(0.96);
+  background: linear-gradient(135deg, #1c1c1e 0%, rgba(139, 92, 246, 0.3) 100%);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.home-tile:active {
+  transform: scale(0.92);
+}
 
 .home-icon { font-size: 28px; line-height: 1; }
 .home-title { font-size: 13px; font-weight: 500; text-align: center; line-height: 1.2; }
+
+/* --- Градиенты для светлой темы --- */
+body.light-theme .home-tile {
+  background: linear-gradient(135deg, #ffffff 0%, rgba(139, 92, 246, 0.15) 100%);
+  border-color: rgba(0, 0, 0, 0.05);
+}
+
+body.light-theme .home-tile:hover {
+  background: linear-gradient(135deg, #ffffff 0%, rgba(139, 92, 246, 0.25) 100%);
+  border-color: rgba(139, 92, 246, 0.4);
+}
 
 /* --- Рамка "Приобрести криптовалюту" / "Поддержать проект" --- */
 .crypto-buy-banner {
@@ -115,7 +135,8 @@ canvas { width: 100% !important; max-height: 260px; }
   align-items: center;
   gap: 12px;
   width: 100%;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.08));
+  /* Насыщенный фиолетовый градиент */
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.25) 100%);
   border: 1px solid var(--accent);
   border-radius: 14px;
   padding: 16px;
@@ -128,7 +149,7 @@ canvas { width: 100% !important; max-height: 260px; }
 }
 
 .crypto-buy-banner:hover { transform: scale(0.98); }
-.crypto-buy-banner:active { transform: scale(0.96); background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(139, 92, 246, 0.12)); }
+.crypto-buy-banner:active { transform: scale(0.96); background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.4) 100%); }
 
 .crypto-buy-icon { font-size: 22px; line-height: 1; }
 .crypto-buy-text { flex: 1; font-size: 14px; font-weight: 600; color: var(--accent); }
@@ -139,6 +160,14 @@ canvas { width: 100% !important; max-height: 260px; }
   width: 200px;
   height: 200px;
   margin: 0 auto;
+  pointer-events: none;
+}
+
+/* --- Анимация на экране поддержки --- */
+.support-animation {
+  width: 200px;
+  height: 200px;
+  margin: 16px auto 0;
   pointer-events: none;
 }
 
@@ -304,11 +333,3 @@ canvas { width: 100% !important; max-height: 260px; }
 }
 
 .hidden { display: none; }
-
-/* --- Анимация на экране поддержки --- */
-.support-animation {
-  width: 200px;
-  height: 200px;
-  margin: 0 auto 16px;
-  pointer-events: none;
-}
