@@ -275,15 +275,29 @@ body.light-theme .crypto-buy-banner:active {
 
 /* --- Кнопка "Назад" --- */
 .back-btn {
-  background: transparent;
-  border: none;
+  background: rgba(139, 92, 246, 0.1); /* Легкий фиолетовый фон */
+  border: 1px solid rgba(139, 92, 246, 0.3); /* Тонкая рамка */
+  border-radius: 8px; /* Скругленные углы */
   color: var(--accent);
-  font-size: 15px;
-  padding: 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 12px; /* Компактные отступы */
   cursor: pointer;
-  font-weight: 500;
-  margin-bottom: 12px;
-  display: block;
+  margin-bottom: 16px;
+  display: inline-flex; /* Чтобы кнопка была по размеру текста */
+  align-items: center;
+  gap: 4px;
+  transition: transform 0.15s, background 0.15s, border-color 0.15s;
+}
+
+/* При наведении/нажатии */
+.back-btn:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: var(--accent);
+}
+
+.back-btn:active {
+  transform: scale(0.95);
 }
 
 /* --- Поиск --- */
