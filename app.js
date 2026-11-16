@@ -90,14 +90,14 @@ function getChartOptions() {
       tooltip: {
         backgroundColor: tooltipBg,
         titleColor: titleColor,
-        titleFont: { size: 11, weight: '500' }, // Уменьшенный шрифт даты
+        titleFont: { size: 11, weight: '500' },
         titleMarginBottom: 4,
         bodyColor: bodyColor,
-        bodyFont: { size: 14, weight: '700' }, // Уменьшенный шрифт значения
+        bodyFont: { size: 14, weight: '700' },
         borderColor: tooltipBorder,
         borderWidth: 1,
-        padding: 8, // Компактные отступы
-        cornerRadius: 8, // Мягкие, но не огромные углы
+        padding: 8,
+        cornerRadius: 8,
         displayColors: false,
         callbacks: {
           label: function(context) {
@@ -450,9 +450,6 @@ document.getElementById('stocksSearch')?.addEventListener('input', (e) => {
 });
 
 // ============================================
-// Копирование кошельков
-// ============================================
-// ============================================
 // Кошельки: копирование и эффект "магнита"
 // ============================================
 document.querySelectorAll('.wallet-card').forEach(card => {
@@ -485,29 +482,26 @@ document.querySelectorAll('.wallet-card').forEach(card => {
     }, 1500);
   });
 
-  // 2. Эффект "магнита" при наведении (только для устройств с мышью)
+  // 2. Эффект "магнита" при наведении (для ПК)
   card.addEventListener('mousemove', (e) => {
     const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left; // Позиция X внутри карточки
-    const y = e.clientY - rect.top;  // Позиция Y внутри карточки
+    const x = e.clientX - rect.left; 
+    const y = e.clientY - rect.top;  
     
-    // Вычисляем сдвиг (чем ближе к краю, тем сильнее сдвиг)
-    // Максимальный сдвиг — 5 пикселей
-    const moveX = (x - rect.width / 2) / 10;
-    const moveY = (y - rect.height / 2) / 10;
+    // Максимальный сдвиг — 4-5 пикселей
+    const moveX = (x - rect.width / 2) / 12;
+    const moveY = (y - rect.height / 2) / 12;
     
-    // Применяем трансформацию (сдвиг + легкое уменьшение)
     card.style.transform = `scale(0.98) translate(${moveX}px, ${moveY}px)`;
-    card.style.transition = 'transform 0.1s ease'; // Быстрая реакция
+    card.style.transition = 'transform 0.1s ease'; 
   });
 
-  // Возвращаем в исходное состояние, когда мышка уходит
+  // Возвращаем в исходное состояние
   card.addEventListener('mouseleave', () => {
     card.style.transform = 'scale(1) translate(0, 0)';
-    card.style.transition = 'transform 0.3s ease'; // Плавный возврат
+    card.style.transition = 'transform 0.3s ease';
   });
 });
-}));
 
 // ============================================
 // Lottie анимации
