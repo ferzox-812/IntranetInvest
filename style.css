@@ -161,13 +161,17 @@ body.light-theme .home-tile:hover {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
-/* --- Рамка "Приобрести криптовалюту" / "Поддержать проект" --- */
+/* --- Рамка "Приобрести криптовалюту" / "Поддержать проект" с круговым свечением --- */
 .crypto-buy-banner {
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.25) 100%);
+  /* Радиальный градиент: темный центр, фиолетовые края */
+  background: radial-gradient(circle at center, 
+    rgba(28, 28, 30, 1) 40%, 
+    rgba(139, 92, 246, 0.15) 100%
+  );
   border: 1px solid var(--accent);
   border-radius: 14px;
   padding: 16px;
@@ -175,12 +179,49 @@ body.light-theme .home-tile:hover {
   cursor: pointer;
   font-family: inherit;
   color: var(--text-color);
-  transition: transform 0.2s ease, background 0.15s;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
   text-align: left;
+  overflow: hidden;
 }
 
-.crypto-buy-banner:hover { transform: scale(0.98); }
-.crypto-buy-banner:active { transform: scale(0.96); background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.4) 100%); }
+.crypto-buy-banner:hover {
+  transform: scale(0.98);
+  background: radial-gradient(circle at center, 
+    rgba(28, 28, 30, 1) 30%, 
+    rgba(139, 92, 246, 0.3) 100%
+  );
+  border-color: rgba(139, 92, 246, 0.8);
+}
+
+.crypto-buy-banner:active {
+  transform: scale(0.96);
+  background: radial-gradient(circle at center, 
+    rgba(28, 28, 30, 1) 20%, 
+    rgba(139, 92, 246, 0.45) 100%
+  );
+}
+
+body.light-theme .crypto-buy-banner {
+  background: radial-gradient(circle at center, 
+    rgba(255, 255, 255, 1) 40%, 
+    rgba(139, 92, 246, 0.15) 100%
+  );
+}
+
+body.light-theme .crypto-buy-banner:hover {
+  background: radial-gradient(circle at center, 
+    rgba(255, 255, 255, 1) 30%, 
+    rgba(139, 92, 246, 0.3) 100%
+  );
+  border-color: rgba(139, 92, 246, 0.8);
+}
+
+body.light-theme .crypto-buy-banner:active {
+  background: radial-gradient(circle at center, 
+    rgba(255, 255, 255, 1) 20%, 
+    rgba(139, 92, 246, 0.45) 100%
+  );
+}
 
 .crypto-buy-text { flex: 1; font-size: 14px; font-weight: 600; color: var(--accent); }
 .crypto-buy-arrow { font-size: 18px; color: var(--accent); font-weight: 600; }
