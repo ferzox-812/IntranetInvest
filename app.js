@@ -450,7 +450,7 @@ document.getElementById('stocksSearch')?.addEventListener('input', (e) => {
 });
 
 // ============================================
-// Кошельки: копирование и эффект "магнита"
+// Кошельки: копирование и эффект "магнита" (макс 1px)
 // ============================================
 document.querySelectorAll('.wallet-card').forEach(card => {
   
@@ -482,21 +482,20 @@ document.querySelectorAll('.wallet-card').forEach(card => {
     }, 1500);
   });
 
-  // 2. Эффект "магнита" при наведении (для ПК)
+  // 2. Эффект "магнита" (максимальный сдвиг 1 пиксель)
   card.addEventListener('mousemove', (e) => {
     const rect = card.getBoundingClientRect();
     const x = e.clientX - rect.left; 
     const y = e.clientY - rect.top;  
     
-    // Максимальный сдвиг — 4-5 пикселей
-    const moveX = (x - rect.width / 2) / 12;
-    const moveY = (y - rect.height / 2) / 12;
+    // Делитель 80 дает максимальный сдвиг ~1 пиксель
+    const moveX = (x - rect.width / 2) / 80;
+    const moveY = (y - rect.height / 2) / 80;
     
     card.style.transform = `scale(0.98) translate(${moveX}px, ${moveY}px)`;
     card.style.transition = 'transform 0.1s ease'; 
   });
 
-  // Возвращаем в исходное состояние
   card.addEventListener('mouseleave', () => {
     card.style.transform = 'scale(1) translate(0, 0)';
     card.style.transition = 'transform 0.3s ease';
