@@ -69,14 +69,16 @@ function getTrendColor(values) {
 }
 
 // ============================================
-// Настройки графиков (зависят от темы)
+// Настройки графиков (с красивым тултипом)
 // ============================================
 function getChartOptions() {
   const isLight = document.body.classList.contains('light-theme');
   const gridColor = isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.05)';
   const textColor = isLight ? '#666666' : '#888888';
-  const tooltipBg = isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(28, 28, 30, 0.9)';
-  const tooltipColor = isLight ? '#000000' : '#ffffff';
+  
+  const tooltipBg = isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(20, 20, 20, 0.95)';
+  const titleColor = isLight ? '#888888' : '#aaaaaa';
+  const bodyColor = isLight ? '#000000' : '#ffffff';
   const tooltipBorder = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
 
   return {
@@ -87,12 +89,29 @@ function getChartOptions() {
       legend: { display: false },
       tooltip: {
         backgroundColor: tooltipBg,
-        titleColor: tooltipColor,
-        bodyColor: tooltipColor,
+        titleColor: titleColor,
+        titleFont: { size: 12, weight: '400' },
+        titleMarginBottom: 6,
+        bodyColor: bodyColor,
+        bodyFont: { size: 16, weight: '700' },
         borderColor: tooltipBorder,
         borderWidth: 1,
-        padding: 10,
+        padding: 12,
+        cornerRadius: 12,
         displayColors: false,
+        callbacks: {
+          label: function(context) {
+            let label = context.dataset.label || '';
+            if (label) label += ': ';
+            if (context.parsed.y !== null) {
+              label += context.parsed.y.toLocaleString('ru-RU', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 4 
+              });
+            }
+            return label;
+          }
+        }
       }
     },
     scales: {
