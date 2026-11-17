@@ -9,11 +9,11 @@ tg.ready();
 tg.expand();
 
 // ============================================
-// Всплывающее окно подсказки
+// Функция для аккордеона подсказки
 // ============================================
-function showHint() {
-  const text = "Обратите внимание: бесплатные API биржи MOEX и Telegram имеют задержку обновления данных. Чаще всего последний торговый день (сегодняшний) появляется в истории только после закрытия торгов или с задержкой в несколько часов. Мы используем только бесплатные ресурсы, поэтому показываем только подтвержденные данные.";
-  tg.showAlert(text);
+function toggleHint(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('hidden');
 }
 
 // ============================================
@@ -60,13 +60,8 @@ async function fetchViaProxy(targetUrl) {
 
 async function fetchJSONViaProxy(targetUrl) {
   const text = await fetchViaProxy(targetUrl);
-  try { 
-    return JSON.parse(text); 
-  } catch (e) {
-    // Если ответ не парсится, значит там HTML или обрезанный JSON
-    console.error("Ошибка парсинга JSON. Ответ сервера:", text);
-    throw new Error('Ответ не JSON: ' + text.slice(0, 150)); 
-  }
+  try { return JSON.parse(text); }
+  catch (e) { throw new Error('Ответ не JSON: ' + text.slice(0, 100)); }
 }
 
 // ============================================
@@ -168,10 +163,6 @@ document.querySelectorAll('.home-tile').forEach(tile => tile.addEventListener('c
 document.querySelectorAll('.crypto-buy-banner').forEach(banner => banner.addEventListener('click', () => switchTab(banner.dataset.target)));
 document.querySelectorAll('.back-btn[data-back]').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.back)));
 
-// Подключаем обработчики для кнопок подсказки
-document.getElementById('indexHintBtn')?.addEventListener('click', showHint);
-document.getElementById('stockHintBtn')?.addEventListener('click', showHint);
-
 // ============================================
 // Акции (Список)
 // ============================================
@@ -224,6 +215,7 @@ function openStockView(ticker, name) {
   document.querySelectorAll('#stockPeriods .period-btn').forEach(b => b.classList.remove('active'));
   document.querySelector('#stockPeriods .period-btn[data-days="365"]')?.classList.add('active');
   document.getElementById('stockHintBtn').classList.add('hidden');
+  document.getElementById('stockHintText').classList.add('hidden');
 
   document.getElementById('stockView').classList.remove('hidden');
   renderChart('stock', ticker, { days: 365 });
@@ -468,6 +460,7 @@ document.querySelectorAll('#indexPeriods .period-btn').forEach(btn => {
     btn.classList.add('active');
     const days = parseInt(btn.dataset.days);
     document.getElementById('indexHintBtn').classList.toggle('hidden', days !== 3);
+    if (days !== 3) document.getElementById('indexHintText').classList.add('hidden');
     renderChart('index', 'IMOEX', { days });
   });
 });
@@ -478,6 +471,7 @@ document.querySelectorAll('#stockPeriods .period-btn').forEach(btn => {
     btn.classList.add('active');
     const days = parseInt(btn.dataset.days);
     document.getElementById('stockHintBtn').classList.toggle('hidden', days !== 3);
+    if (days !== 3) document.getElementById('stockHintText').classList.add('hidden');
     if (currentTicker) renderChart('stock', currentTicker, { days });
   });
 });
