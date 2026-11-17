@@ -272,7 +272,6 @@ body.light-theme .crypto-buy-banner:active {
   align-items: center;
   gap: 12px;
   background: rgba(28, 28, 30, 0.8);
-  /* Золотая рамка */
   border: 1px solid rgba(255, 215, 0, 0.4); 
   border-radius: 14px;
   padding: 16px;
@@ -280,11 +279,9 @@ body.light-theme .crypto-buy-banner:active {
   cursor: pointer;
   position: relative;
   transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
-  /* Легкое золотистое сияние по умолчанию */
   box-shadow: 0 0 12px rgba(255, 215, 0, 0.08); 
 }
 
-/* При наведении сияние становится ярче */
 .wallet-card:hover {
   transform: scale(0.98);
   background: rgba(28, 28, 30, 0.95);
@@ -300,7 +297,6 @@ body.light-theme .crypto-buy-banner:active {
   overflow: hidden;
 }
 
-/* Название кошелька — золотое */
 .wallet-label {
   font-size: 13px;
   font-weight: 700;
@@ -317,7 +313,6 @@ body.light-theme .crypto-buy-banner:active {
   line-height: 1.4;
 }
 
-/* Иконка копирования с золотым акцентом */
 .wallet-copy-icon {
   font-size: 20px;
   padding: 8px;
@@ -442,6 +437,36 @@ body.light-theme .crypto-buy-banner:active {
 .stock-change.up { color: #26a269; }
 .stock-change.down { color: #e01b24; }
 
+/* --- Кнопка подсказки и текст --- */
+.hint-btn {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-size: 11px;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+  margin: 0 auto;
+  display: inline-block;
+}
+
+.hint-btn:hover { opacity: 1; }
+.hint-btn.hidden { display: none; }
+
+.hint-text {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-muted);
+  text-align: left;
+  background: var(--card-bg);
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 8px;
+  border: 1px solid var(--card-border);
+}
+
 /* --- Футер --- */
 .footer {
   border: 1px solid var(--accent);
@@ -473,25 +498,3 @@ body.light-theme .crypto-buy-banner:active {
 }
 
 .hidden { display: none; }
-/* --- Кнопка подсказки под графиком --- */
-.hint-btn {
-  display: block;
-  margin: 12px auto 0;
-  background: transparent;
-  border: none;
-  color: var(--accent);
-  font-size: 11px;
-  text-decoration: underline;
-  text-decoration-style: dotted;
-  cursor: pointer;
-  opacity: 0.8;
-  transition: opacity 0.2s;
-}
-
-.hint-btn:hover {
-  opacity: 1;
-}
-
-.hint-btn.hidden {
-  display: none;
-}
