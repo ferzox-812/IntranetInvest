@@ -8,6 +8,7 @@
   --grid-color: rgba(255, 255, 255, 0.05);
   --btn-hover: rgba(255, 255, 255, 0.08);
   --accent: #8b5cf6;
+  --gold: #ffd700;
 }
 
 body.light-theme {
@@ -242,8 +243,8 @@ body.light-theme .crypto-buy-banner:active {
   pointer-events: none;
 }
 
-/* --- P2P-опции и кошельки --- */
-.p2p-option, .wallet-card {
+/* --- P2P-опции --- */
+.p2p-option {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -257,40 +258,95 @@ body.light-theme .crypto-buy-banner:active {
   transition: transform 0.15s, background 0.15s;
 }
 
-.wallet-card { cursor: pointer; position: relative; }
-
-.p2p-option:hover, .wallet-card:hover { transform: scale(0.98); }
-.p2p-option:active, .wallet-card:active { transform: scale(0.96); background: var(--btn-hover); }
+.p2p-option:hover { transform: scale(0.98); }
+.p2p-option:active { transform: scale(0.96); background: var(--btn-hover); }
 
 .p2p-option-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
 .p2p-option-title { font-size: 15px; font-weight: 600; }
 .p2p-option-desc { font-size: 11px; opacity: 0.6; }
 .p2p-option-arrow { font-size: 18px; color: var(--accent); font-weight: 600; }
 
-/* --- Кошельки (Поддержка) --- */
-.wallet-info { flex: 1; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
-.wallet-label { font-size: 12px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; }
-.wallet-address { font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; word-break: break-all; opacity: 0.8; line-height: 1.4; }
-.wallet-copy-icon { font-size: 18px; opacity: 0.6; transition: opacity 0.15s; }
+/* --- Карточки кошельков (Золотые) --- */
+.wallet-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(28, 28, 30, 0.8);
+  /* Золотая рамка */
+  border: 1px solid rgba(255, 215, 0, 0.4); 
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  /* Легкое золотистое сияние по умолчанию */
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.08); 
+}
+
+/* При наведении сияние становится ярче */
+.wallet-card:hover {
+  transform: scale(0.98);
+  background: rgba(28, 28, 30, 0.95);
+  border-color: rgba(255, 215, 0, 0.8);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+}
+
+.wallet-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+}
+
+/* Название кошелька — золотое */
+.wallet-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold); 
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.wallet-address {
+  font-size: 13px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  word-break: break-all;
+  color: #dddddd; 
+  line-height: 1.4;
+}
+
+/* Иконка копирования с золотым акцентом */
+.wallet-copy-icon {
+  font-size: 20px;
+  padding: 8px;
+  background: rgba(255, 215, 0, 0.1);
+  border-radius: 8px;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.wallet-card:hover .wallet-copy-icon {
+  background: rgba(255, 215, 0, 0.25);
+}
 
 /* --- Кнопка "Назад" --- */
 .back-btn {
-  background: rgba(139, 92, 246, 0.1); /* Легкий фиолетовый фон */
-  border: 1px solid rgba(139, 92, 246, 0.3); /* Тонкая рамка */
-  border-radius: 8px; /* Скругленные углы */
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 8px;
   color: var(--accent);
   font-size: 14px;
   font-weight: 600;
-  padding: 6px 12px; /* Компактные отступы */
+  padding: 6px 12px;
   cursor: pointer;
   margin-bottom: 16px;
-  display: inline-flex; /* Чтобы кнопка была по размеру текста */
+  display: inline-flex;
   align-items: center;
   gap: 4px;
   transition: transform 0.15s, background 0.15s, border-color 0.15s;
 }
 
-/* При наведении/нажатии */
 .back-btn:hover {
   background: rgba(139, 92, 246, 0.2);
   border-color: var(--accent);
