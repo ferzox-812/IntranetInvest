@@ -60,8 +60,13 @@ async function fetchViaProxy(targetUrl) {
 
 async function fetchJSONViaProxy(targetUrl) {
   const text = await fetchViaProxy(targetUrl);
-  try { return JSON.parse(text); }
-  catch (e) { throw new Error('Ответ не JSON: ' + text.slice(0, 100)); }
+  try { 
+    return JSON.parse(text); 
+  } catch (e) {
+    // Если ответ не парсится, значит там HTML или обрезанный JSON
+    console.error("Ошибка парсинга JSON. Ответ сервера:", text);
+    throw new Error('Ответ не JSON: ' + text.slice(0, 150)); 
+  }
 }
 
 // ============================================
