@@ -313,11 +313,17 @@ document.getElementById('cryptoBack').addEventListener('click', closeCryptoView)
 // Загрузка истории
 // ============================================
 async function loadHistory(target, secid, period) {
-  const days = period.days;
+  // Запрашиваем с запасом, чтобы точно захватить 3 торговых дня, даже если сегодня выходной
+  const daysToFetch = period.days === 3 ? 7 : period.days;
+  
   const from = new Date();
-  from.setDate(from.getDate() - days);
+  from.setDate(from.getDate() - daysToFetch);
   const fromStr = from.toISOString().slice(0, 10);
-  let endpoint = target === 'index' ? `https://iss.moex.com/iss/history/engines/stock/markets/index/securities/${secid}.json` : `https://iss.moex.com/iss/history/engines/stock/markets/shares/boards/TQBR/securities/${secid}.json`;
+  
+  let endpoint = target === 'index' 
+    ? `https://iss.moex.com/iss/history/engines/stock/markets/index/securities/${secid}.json` 
+    : `https://iss.moex.com/iss/history/engines/stock/markets/shares/boards/TQBR/securities/${secid}.json`;
+
   let allRows = [], columns = null, start = 0;
   while (true) {
     const data = await fetchJSONViaProxy(`${endpoint}?from=${fromStr}&start=${start}`);
@@ -328,10 +334,24 @@ async function loadHistory(target, secid, period) {
     start += 100;
     if (start > 10000) break;
   }
+
   if (!columns) throw new Error('Нет данных');
   const closeIdx = columns.indexOf('CLOSE'), dateIdx = columns.indexOf('TRADEDATE');
+
+  // Сортируем по дате (старые -> новые)
   allRows.sort((a, b) => (a[dateIdx] < b[dateIdx] ? -1 : a[dateIdx] > b[dateIdx] ? 1 : 0));
-  return { labels: allRows.map(r => r[dateIdx]), values: allRows.map(r => r[closeIdx]).filter(v => v !== null) };
+
+  let labels = allRows.map(r => r[dateIdx]);
+  let values = allRows.map(r => r[closeIdx]).filter(v => v !== null);
+
+  // Если запросили 3 дня, берём ровно 3 последних торговых дня (или меньше, если их нет)
+  if (period.days === 3) {
+    const last3Labels = labels.slice(-3);
+    const last3Values = values.slice(-3);
+    return { labels: last3Labels, values: last3Values };
+  }
+
+  return { labels, values };
 }
 
 async function loadCurrencyHistory(baseCurrency, period) {
