@@ -473,3 +473,25 @@ body.light-theme .crypto-buy-banner:active {
 }
 
 .hidden { display: none; }
+/* --- Кнопка подсказки под графиком --- */
+.hint-btn {
+  display: block;
+  margin: 12px auto 0;
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-size: 11px;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.hint-btn:hover {
+  opacity: 1;
+}
+
+.hint-btn.hidden {
+  display: none;
+}
