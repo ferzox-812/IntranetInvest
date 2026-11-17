@@ -9,6 +9,14 @@ tg.ready();
 tg.expand();
 
 // ============================================
+// Всплывающее окно подсказки
+// ============================================
+function showHint() {
+  const text = "Обратите внимание: бесплатные API биржи MOEX и Telegram имеют задержку обновления данных. Чаще всего последний торговый день (сегодняшний) появляется в истории только после закрытия торгов или с задержкой в несколько часов. Мы используем только бесплатные ресурсы, поэтому показываем только подтвержденные данные.";
+  tg.showAlert(text);
+}
+
+// ============================================
 // Тема (Светлая / Тёмная)
 // ============================================
 function initTheme() {
@@ -155,6 +163,10 @@ document.querySelectorAll('.home-tile').forEach(tile => tile.addEventListener('c
 document.querySelectorAll('.crypto-buy-banner').forEach(banner => banner.addEventListener('click', () => switchTab(banner.dataset.target)));
 document.querySelectorAll('.back-btn[data-back]').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.back)));
 
+// Подключаем обработчики для кнопок подсказки
+document.getElementById('indexHintBtn')?.addEventListener('click', showHint);
+document.getElementById('stockHintBtn')?.addEventListener('click', showHint);
+
 // ============================================
 // Акции (Список)
 // ============================================
@@ -203,8 +215,11 @@ function openStockView(ticker, name) {
   currentTicker = ticker;
   document.getElementById('stockTitle').textContent = ticker;
   document.getElementById('stockSubtitle').textContent = name || '';
+  
   document.querySelectorAll('#stockPeriods .period-btn').forEach(b => b.classList.remove('active'));
   document.querySelector('#stockPeriods .period-btn[data-days="365"]')?.classList.add('active');
+  document.getElementById('stockHintBtn').classList.add('hidden');
+
   document.getElementById('stockView').classList.remove('hidden');
   renderChart('stock', ticker, { days: 365 });
 }
@@ -313,17 +328,11 @@ document.getElementById('cryptoBack').addEventListener('click', closeCryptoView)
 // Загрузка истории
 // ============================================
 async function loadHistory(target, secid, period) {
-  // Запрашиваем с запасом, чтобы точно захватить 3 торговых дня, даже если сегодня выходной
   const daysToFetch = period.days === 3 ? 7 : period.days;
-  
   const from = new Date();
   from.setDate(from.getDate() - daysToFetch);
   const fromStr = from.toISOString().slice(0, 10);
-  
-  let endpoint = target === 'index' 
-    ? `https://iss.moex.com/iss/history/engines/stock/markets/index/securities/${secid}.json` 
-    : `https://iss.moex.com/iss/history/engines/stock/markets/shares/boards/TQBR/securities/${secid}.json`;
-
+  let endpoint = target === 'index' ? `https://iss.moex.com/iss/history/engines/stock/markets/index/securities/${secid}.json` : `https://iss.moex.com/iss/history/engines/stock/markets/shares/boards/TQBR/securities/${secid}.json`;
   let allRows = [], columns = null, start = 0;
   while (true) {
     const data = await fetchJSONViaProxy(`${endpoint}?from=${fromStr}&start=${start}`);
@@ -334,23 +343,16 @@ async function loadHistory(target, secid, period) {
     start += 100;
     if (start > 10000) break;
   }
-
   if (!columns) throw new Error('Нет данных');
   const closeIdx = columns.indexOf('CLOSE'), dateIdx = columns.indexOf('TRADEDATE');
-
-  // Сортируем по дате (старые -> новые)
   allRows.sort((a, b) => (a[dateIdx] < b[dateIdx] ? -1 : a[dateIdx] > b[dateIdx] ? 1 : 0));
-
+  
   let labels = allRows.map(r => r[dateIdx]);
   let values = allRows.map(r => r[closeIdx]).filter(v => v !== null);
 
-  // Если запросили 3 дня, берём ровно 3 последних торговых дня (или меньше, если их нет)
   if (period.days === 3) {
-    const last3Labels = labels.slice(-3);
-    const last3Values = values.slice(-3);
-    return { labels: last3Labels, values: last3Values };
+    return { labels: labels.slice(-3), values: values.slice(-3) };
   }
-
   return { labels, values };
 }
 
@@ -455,10 +457,41 @@ async function renderCryptoDetail(coin, period) {
 // ============================================
 // Обработчики кнопок периодов
 // ============================================
-document.querySelectorAll('#indexPeriods .period-btn').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('#indexPeriods .period-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderChart('index', 'IMOEX', { days: parseInt(btn.dataset.days) }); }));
-document.querySelectorAll('#stockPeriods .period-btn').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('#stockPeriods .period-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); if (currentTicker) renderChart('stock', currentTicker, { days: parseInt(btn.dataset.days) }); }));
-document.querySelectorAll('#currencyPeriods .period-btn').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('#currencyPeriods .period-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); if (currentCurrency) renderCurrencyChart(currentCurrency, { days: parseInt(btn.dataset.days) }); }));
-document.querySelectorAll('#cryptoDetailPeriods .period-btn').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('#cryptoDetailPeriods .period-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); if (currentCoin) renderCryptoDetail(currentCoin, btn.dataset.hours ? { hours: 24 } : { days: parseInt(btn.dataset.days) }); }));
+document.querySelectorAll('#indexPeriods .period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#indexPeriods .period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const days = parseInt(btn.dataset.days);
+    document.getElementById('indexHintBtn').classList.toggle('hidden', days !== 3);
+    renderChart('index', 'IMOEX', { days });
+  });
+});
+
+document.querySelectorAll('#stockPeriods .period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#stockPeriods .period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const days = parseInt(btn.dataset.days);
+    document.getElementById('stockHintBtn').classList.toggle('hidden', days !== 3);
+    if (currentTicker) renderChart('stock', currentTicker, { days });
+  });
+});
+
+document.querySelectorAll('#currencyPeriods .period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#currencyPeriods .period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (currentCurrency) renderCurrencyChart(currentCurrency, { days: parseInt(btn.dataset.days) });
+  });
+});
+
+document.querySelectorAll('#cryptoDetailPeriods .period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#cryptoDetailPeriods .period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (currentCoin) renderCryptoDetail(currentCoin, btn.dataset.hours ? { hours: 24 } : { days: parseInt(btn.dataset.days) });
+  });
+});
 
 // ============================================
 // Поиск
@@ -470,49 +503,24 @@ document.getElementById('stocksSearch')?.addEventListener('input', (e) => {
 });
 
 // ============================================
-// Кошельки: копирование и эффект "магнита" (макс 1px)
+// Кошельки
 // ============================================
 document.querySelectorAll('.wallet-card').forEach(card => {
-  
-  // 1. Логика копирования при клике
   card.addEventListener('click', async () => {
     const address = card.dataset.copy;
     if (!address) return;
-    
-    try { 
-      await navigator.clipboard.writeText(address); 
-    } catch (e) { 
-      const t = document.createElement('textarea'); 
-      t.value = address; 
-      document.body.appendChild(t); 
-      t.select(); 
-      document.execCommand('copy'); 
-      document.body.removeChild(t); 
-    }
-    
+    try { await navigator.clipboard.writeText(address); } catch (e) { const t = document.createElement('textarea'); t.value = address; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); }
     const icon = card.querySelector('.wallet-copy-icon');
     const orig = icon.textContent;
-    icon.textContent = '✅'; 
-    icon.style.opacity = '1';
+    icon.textContent = '✅'; icon.style.opacity = '1';
     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-    
-    setTimeout(() => { 
-      icon.textContent = orig; 
-      icon.style.opacity = '0.6'; 
-    }, 1500);
+    setTimeout(() => { icon.textContent = orig; icon.style.opacity = '0.6'; }, 1500);
   });
 
-  // 2. Эффект "магнита" (максимальный сдвиг 1 пиксель)
   card.addEventListener('mousemove', (e) => {
     const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left; 
-    const y = e.clientY - rect.top;  
-    
-    // Делитель 80 дает максимальный сдвиг ~1 пиксель
-    const moveX = (x - rect.width / 2) / 80;
-    const moveY = (y - rect.height / 2) / 80;
-    
-    card.style.transform = `scale(0.98) translate(${moveX}px, ${moveY}px)`;
+    const x = e.clientX - rect.left, y = e.clientY - rect.top;
+    card.style.transform = `scale(0.98) translate(${(x - rect.width/2)/80}px, ${(y - rect.height/2)/80}px)`;
     card.style.transition = 'transform 0.1s ease'; 
   });
 
