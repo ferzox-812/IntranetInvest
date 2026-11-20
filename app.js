@@ -35,15 +35,12 @@ function toggleTheme() {
   localStorage.setItem('theme', isLight ? 'light' : 'dark');
   document.getElementById('themeIcon').textContent = isLight ? '☀️' : '🌙';
   
-  if (!document.querySelector('.tab[data-tab="index"]').classList.contains('hidden')) {
-    const activeType = document.querySelector('.index-type-btn.active').dataset.type;
-    if (activeType === 'sp500') renderSP500({ days: 365 });
-    else renderChart('index', 'IMOEX', { days: 365 });
-  }
+  if (!document.querySelector('.tab[data-tab="index"]').classList.contains('hidden')) renderIndexList();
   if (!document.querySelector('.tab[data-tab="stocks"]').classList.contains('hidden')) renderStocksList();
   if (!document.querySelector('.tab[data-tab="dollar"]').classList.contains('hidden')) renderCurrencyList();
   if (!document.querySelector('.tab[data-tab="crypto"]').classList.contains('hidden')) renderCryptoList();
   
+  if (currentIndex && !document.getElementById('indexDetailView').classList.contains('hidden')) renderIndexDetail(currentIndex, { days: 365 });
   if (currentTicker && !document.getElementById('stockView').classList.contains('hidden')) renderChart('stock', currentTicker, { days: 365 });
   if (currentCurrency && !document.getElementById('currencyView').classList.contains('hidden')) renderCurrencyChart(currentCurrency, { days: 365 });
   if (currentCoin && !document.getElementById('cryptoView').classList.contains('hidden')) renderCryptoDetail(currentCoin, { days: 365 });
@@ -157,12 +154,7 @@ function switchTab(name) {
   document.querySelector(`.tab[data-tab="${name}"]`)?.classList.remove('hidden');
   document.getElementById('pageSubtitle').textContent = SUBTITLES[name] || '';
 
-  if (name === 'index' && !LOADED.index) { 
-    LOADED.index = true; 
-    const activeType = document.querySelector('.index-type-btn.active').dataset.type;
-    if (activeType === 'sp500') renderSP500({ days: 365 });
-    else renderChart('index', 'IMOEX', { days: 365 }); 
-  }
+  if (name === 'index' && !LOADED.index) { LOADED.index = true; renderIndexList(); }
   if (name === 'stocks' && !LOADED.stocks) { LOADED.stocks = true; renderStocksList(); }
   if (name === 'dollar' && !LOADED.dollar) { LOADED.dollar = true; renderCurrencyList(); }
   if (name === 'crypto' && !LOADED.crypto) { LOADED.crypto = true; renderCryptoList(); }
@@ -173,24 +165,54 @@ document.querySelectorAll('.crypto-buy-banner').forEach(banner => banner.addEven
 document.querySelectorAll('.back-btn[data-back]').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.back)));
 
 // ============================================
-// Переключатель индексов (IMOEX / S&P 500)
+// Индексы (Список)
 // ============================================
-document.querySelectorAll('.index-type-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.index-type-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    
-    const type = btn.dataset.type;
-    const activePeriod = document.querySelector('#indexPeriods .period-btn.active');
-    const days = activePeriod ? parseInt(activePeriod.dataset.days) : 365;
-    
-    if (type === 'sp500') {
-      renderSP500({ days });
-    } else {
-      renderChart('index', 'IMOEX', { days });
+async function renderIndexList() {
+  try {
+    // Загружаем текущее значение IMOEX
+    const moexData = await loadHistory('index', 'IMOEX', { days: 3 });
+    if (moexData.values.length > 0) {
+      document.getElementById('imoexPriceList').textContent = moexData.values[moexData.values.length - 1].toFixed(2);
     }
-  });
+
+    // Загружаем текущее значение S&P 500
+    const sp500Data = await loadSP500History({ days: 3 });
+    if (sp500Data.values.length > 0) {
+      document.getElementById('sp500PriceList').textContent = sp500Data.values[sp500Data.values.length - 1].toFixed(2);
+    }
+  } catch (e) {
+    console.error('Ошибка загрузки списка индексов:', e);
+  }
+}
+
+document.querySelectorAll('#indexList .stock-row').forEach(row => {
+  row.addEventListener('click', () => openIndexView(row.dataset.index));
 });
+
+// ============================================
+// Экран Индекса
+// ============================================
+let indexDetailChartInstance = null;
+let currentIndex = null;
+
+function openIndexView(indexType) {
+  currentIndex = indexType;
+  const titles = { imoex: 'Индекс Мосбиржи (IMOEX)', sp500: 'S&P 500' };
+  document.getElementById('indexDetailTitle').textContent = titles[indexType];
+  document.querySelectorAll('#indexDetailPeriods .period-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('#indexDetailPeriods .period-btn[data-days="365"]')?.classList.add('active');
+  
+  document.getElementById('indexDetailView').classList.remove('hidden');
+  renderIndexDetail(indexType, { days: 365 });
+}
+
+function closeIndexView() {
+  document.getElementById('indexDetailView').classList.add('hidden');
+  currentIndex = null;
+  if (indexDetailChartInstance) { indexDetailChartInstance.destroy(); indexDetailChartInstance = null; }
+}
+
+document.getElementById('indexDetailBack').addEventListener('click', closeIndexView);
 
 // ============================================
 // Акции (Список)
@@ -387,13 +409,12 @@ async function loadHistory(target, secid, period) {
 // ============================================
 async function loadSP500History(period) {
   const days = period.days;
-  const data = await fetchJSONViaProxy('fred/sp500'); // Обращаемся к нашему Worker
+  const data = await fetchJSONViaProxy('fred/sp500'); 
 
   if (!data || !data.labels || data.labels.length === 0) {
     throw new Error('Нет данных S&P 500');
   }
 
-  // Фильтруем по дате
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - days);
   
@@ -409,6 +430,15 @@ async function loadSP500History(period) {
   }
 
   if (filteredValues.length === 0) throw new Error('Нет данных за период');
+  
+  // Для 3Д берем последние 3 дня
+  if (period.days === 3) {
+    return { 
+      labels: filteredLabels.slice(-3), 
+      values: filteredValues.slice(-3) 
+    };
+  }
+
   return { labels: filteredLabels, values: filteredValues };
 }
 
@@ -462,14 +492,26 @@ async function renderChart(target, secid, period) {
   } catch (e) { statusEl.textContent = 'Ошибка: ' + e.message; }
 }
 
-async function renderSP500(period) {
-  const statusEl = document.getElementById('chartStatus');
-  const canvasEl = document.getElementById('imoexChart');
-  statusEl.textContent = 'Загрузка S&P 500...';
+async function renderIndexDetail(indexType, period) {
+  const statusEl = document.getElementById('indexDetailStatus');
+  const canvasEl = document.getElementById('indexDetailChart');
+  statusEl.textContent = 'Загрузка...';
+  
   try {
-    const data = await loadSP500History(period);
-    window.__imoexChartInstance = drawSimpleChart(canvasEl, statusEl, data, 'S&P 500', window.__imoexChartInstance);
-  } catch (e) { statusEl.textContent = 'Ошибка: ' + e.message; }
+    let data;
+    let label;
+    if (indexType === 'sp500') {
+      data = await loadSP500History(period);
+      label = 'S&P 500';
+    } else {
+      data = await loadHistory('index', 'IMOEX', period);
+      label = 'IMOEX';
+    }
+    
+    indexDetailChartInstance = drawSimpleChart(canvasEl, statusEl, data, label, indexDetailChartInstance);
+  } catch (e) { 
+    statusEl.textContent = 'Ошибка: ' + e.message; 
+  }
 }
 
 async function renderCurrencyChart(currency, period) {
@@ -497,17 +539,12 @@ async function renderCryptoDetail(coin, period) {
 // ============================================
 // Обработчики кнопок периодов
 // ============================================
-document.querySelectorAll('#indexPeriods .period-btn').forEach(btn => {
+document.querySelectorAll('#indexDetailPeriods .period-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('#indexPeriods .period-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#indexDetailPeriods .period-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const days = parseInt(btn.dataset.days);
-    document.getElementById('indexHintBtn').classList.toggle('hidden', days !== 3);
-    if (days !== 3) document.getElementById('indexHintText').classList.add('hidden');
-    
-    const activeType = document.querySelector('.index-type-btn.active').dataset.type;
-    if (activeType === 'sp500') renderSP500({ days });
-    else renderChart('index', 'IMOEX', { days });
+    if (currentIndex) renderIndexDetail(currentIndex, { days });
   });
 });
 
