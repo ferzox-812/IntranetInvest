@@ -78,7 +78,7 @@ function getTrendColor(values) {
 }
 
 // ============================================
-// Настройки графиков (с компактным тултипом)
+// Настройки графиков
 // ============================================
 function getChartOptions() {
   const isLight = document.body.classList.contains('light-theme');
@@ -169,13 +169,11 @@ document.querySelectorAll('.back-btn[data-back]').forEach(btn => btn.addEventLis
 // ============================================
 async function renderIndexList() {
   try {
-    // Загружаем текущее значение IMOEX
     const moexData = await loadHistory('index', 'IMOEX', { days: 3 });
     if (moexData.values.length > 0) {
       document.getElementById('imoexPriceList').textContent = moexData.values[moexData.values.length - 1].toFixed(2);
     }
 
-    // Загружаем текущее значение S&P 500
     const sp500Data = await loadSP500History({ days: 3 });
     if (sp500Data.values.length > 0) {
       document.getElementById('sp500PriceList').textContent = sp500Data.values[sp500Data.values.length - 1].toFixed(2);
@@ -405,7 +403,7 @@ async function loadHistory(target, secid, period) {
 }
 
 // ============================================
-// Загрузка S&P 500 (через FRED)
+// Загрузка S&P 500 (FRED)
 // ============================================
 async function loadSP500History(period) {
   const days = period.days;
@@ -431,7 +429,6 @@ async function loadSP500History(period) {
 
   if (filteredValues.length === 0) throw new Error('Нет данных за период');
   
-  // Для 3Д берем последние 3 дня
   if (period.days === 3) {
     return { 
       labels: filteredLabels.slice(-3), 
@@ -440,6 +437,38 @@ async function loadSP500History(period) {
   }
 
   return { labels: filteredLabels, values: filteredValues };
+}
+
+// ============================================
+// Загрузка Валют (Frankfurter)
+// ============================================
+async function loadCurrencyHistory(baseCurrency, period) {
+  const end = new Date(), start = new Date();
+  start.setDate(start.getDate() - period.days);
+  const fmt = (d) => d.toISOString().slice(0, 10);
+  const url = `https://api.frankfurter.dev/v2/rates?base=${baseCurrency}&quotes=RUB&from=${fmt(start)}&to=${fmt(end)}`;
+  const data = await fetchJSONViaProxy(url);
+  if (!Array.isArray(data)) throw new Error('Ошибка Frankfurter');
+  const sorted = data.slice().sort((a, b) => a.date.localeCompare(b.date));
+  return { labels: sorted.map(row => row.date), values: sorted.map(row => row.rate) };
+}
+
+// ============================================
+// Загрузка Крипты (Kraken)
+// ============================================
+async function loadCryptoHistory(symbol, period) {
+  const pairMap = { 'bitcoin': 'XBTUSD', 'gram': 'TONUSD', 'ethereum': 'ETHUSD' };
+  const pair = pairMap[symbol] || symbol;
+  const is24h = period.hours === 24;
+  const interval = is24h ? 60 : 1440;
+  const limit = is24h ? 24 : period.days;
+  const url = `https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=${interval}`;
+  const data = await fetchJSONViaProxy(url);
+  if (!data.result) throw new Error('Ошибка Kraken');
+  const resultKey = Object.keys(data.result).find(k => k !== 'last');
+  if (!resultKey) throw new Error('Нет данных Kraken');
+  const candles = data.result[resultKey].slice(-limit);
+  return { labels: candles.map(c => { const d = new Date(c[0] * 1000); return is24h ? d.toISOString().slice(11, 16) : d.toISOString().slice(0, 10); }), values: candles.map(c => parseFloat(c[4])) };
 }
 
 // ============================================
@@ -477,7 +506,7 @@ function drawSimpleChart(canvasEl, statusEl, data, label, instance) {
   
   const last = data.values[data.values.length - 1], first = data.values[0];
   const change = ((last - first) / first * 100).toFixed(2);
-  statusEl.textContent = `Текущее: ${last.toFixed(2)} • Изменение: ${change > 0 ? '+' : ''}${change}%`;
+  statusEl.textContent = `Текущее: ${last.toFixed(4)} • Изменение: ${change > 0 ? '+' : ''}${change}%`;
   return chart;
 }
 
