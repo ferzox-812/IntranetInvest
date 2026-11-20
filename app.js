@@ -183,8 +183,12 @@ async function renderIndexList() {
   }
 }
 
-document.querySelectorAll('#indexList .stock-row').forEach(row => {
-  row.addEventListener('click', () => openIndexView(row.dataset.index));
+// Делегирование клика для карточек индексов
+document.getElementById('indexList').addEventListener('click', (e) => {
+  const row = e.target.closest('.stock-row');
+  if (row && row.dataset.index) {
+    openIndexView(row.dataset.index);
+  }
 });
 
 // ============================================
@@ -200,7 +204,6 @@ function openIndexView(indexType) {
   document.querySelectorAll('#indexDetailPeriods .period-btn').forEach(b => b.classList.remove('active'));
   document.querySelector('#indexDetailPeriods .period-btn[data-days="365"]')?.classList.add('active');
   
-  // Скрываем подсказку при открытии (по умолчанию 1Г)
   document.getElementById('indexDetailHintBtn').classList.add('hidden');
   document.getElementById('indexDetailHintText').classList.add('hidden');
 
@@ -578,7 +581,6 @@ document.querySelectorAll('#indexDetailPeriods .period-btn').forEach(btn => {
     btn.classList.add('active');
     const days = parseInt(btn.dataset.days);
     
-    // Показываем/скрываем подсказку
     document.getElementById('indexDetailHintBtn').classList.toggle('hidden', days !== 3);
     if (days !== 3) document.getElementById('indexDetailHintText').classList.add('hidden');
 
