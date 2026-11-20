@@ -35,7 +35,7 @@
           <span class="home-title">Крипта</span>
         </button>
         <button class="home-tile" data-target="index">
-          <img src="chart.png" class="home-icon-img" alt="Индекс">
+          <img src="chart.png" class="home-icon-img" alt="Индексы">
           <span class="home-title">Индексы</span>
         </button>
         <button class="home-tile" data-target="stocks">
@@ -199,29 +199,29 @@
       </footer>
     </section>
 
-    <!-- ИНДЕКСЫ -->
+    <!-- ИНДЕКСЫ (СПИСОК) -->
     <section class="tab hidden" data-tab="index">
       <button class="back-btn" data-back="home">← Назад</button>
       <div class="card">
-        <!-- Переключатель индексов -->
-        <div class="index-type-switch">
-          <button class="index-type-btn active" data-type="imoex">IMOEX</button>
-          <button class="index-type-btn" data-type="sp500">S&P 500</button>
-        </div>
-
-        <div class="period-switch" id="indexPeriods">
-          <button class="period-btn" data-days="3">3Д</button>
-          <button class="period-btn" data-days="30">1М</button>
-          <button class="period-btn" data-days="180">6М</button>
-          <button class="period-btn active" data-days="365">1Г</button>
-          <button class="period-btn" data-days="1825">5Л</button>
-        </div>
-        <canvas id="imoexChart"></canvas>
-        <p id="chartStatus" class="status">Загрузка данных...</p>
-        <div style="text-align: center; margin-top: 12px;">
-          <button class="hint-btn hidden" id="indexHintBtn" onclick="toggleHint('indexHintText')">Почему нет данных за сегодня?</button>
-          <div id="indexHintText" class="hint-text hidden">
-            Бесплатные API биржи MOEX и Telegram имеют задержку. Чаще всего сегодняшний торговый день появляется в истории только после закрытия торгов или с задержкой в несколько часов. Мы используем только бесплатные ресурсы, поэтому показываем только подтвержденные данные.
+        <div id="indexList" class="list">
+          <!-- Карточка IMOEX -->
+          <div class="stock-row" data-index="imoex" style="cursor: pointer;">
+            <div>
+              <div class="stock-ticker">🇷🇺 Индекс Мосбиржи (IMOEX)</div>
+              <div class="stock-name">Индекс российских акций</div>
+            </div>
+            <div class="stock-price" id="imoexPriceList">—</div>
+            <div class="stock-change">—</div>
+          </div>
+          
+          <!-- Карточка S&P 500 -->
+          <div class="stock-row" data-index="sp500" style="cursor: pointer;">
+            <div>
+              <div class="stock-ticker">🇺🇸 S&P 500</div>
+              <div class="stock-name">Индекс 500 крупнейших компаний США</div>
+            </div>
+            <div class="stock-price" id="sp500PriceList">—</div>
+            <div class="stock-change">—</div>
           </div>
         </div>
       </div>
@@ -250,6 +250,30 @@
         <div style="text-align: center; margin-top: 12px;">
           <button class="hint-btn hidden" id="stockHintBtn" onclick="toggleHint('stockHintText')">Почему нет данных за сегодня?</button>
           <div id="stockHintText" class="hint-text hidden">
+            Бесплатные API биржи MOEX и Telegram имеют задержку. Чаще всего сегодняшний торговый день появляется в истории только после закрытия торгов или с задержкой в несколько часов. Мы используем только бесплатные ресурсы, поэтому показываем только подтвержденные данные.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ЭКРАН ИНДЕКСА (ДЕТАЛИЗАЦИЯ) -->
+    <section id="indexDetailView" class="stock-view hidden">
+      <button id="indexDetailBack" class="back-btn">← Назад</button>
+      <h2 id="indexDetailTitle">—</h2>
+      
+      <div class="card">
+        <div class="period-switch" id="indexDetailPeriods">
+          <button class="period-btn" data-days="3">3Д</button>
+          <button class="period-btn" data-days="30">1М</button>
+          <button class="period-btn" data-days="180">6М</button>
+          <button class="period-btn active" data-days="365">1Г</button>
+          <button class="period-btn" data-days="1825">5Л</button>
+        </div>
+        <canvas id="indexDetailChart"></canvas>
+        <p id="indexDetailStatus" class="status">Загрузка данных...</p>
+        <div style="text-align: center; margin-top: 12px;">
+          <button class="hint-btn hidden" id="indexHintBtn" onclick="toggleHint('indexHintText')">Почему нет данных за сегодня?</button>
+          <div id="indexHintText" class="hint-text hidden">
             Бесплатные API биржи MOEX и Telegram имеют задержку. Чаще всего сегодняшний торговый день появляется в истории только после закрытия торгов или с задержкой в несколько часов. Мы используем только бесплатные ресурсы, поэтому показываем только подтвержденные данные.
           </div>
         </div>
