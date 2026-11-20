@@ -369,15 +369,15 @@ body.light-theme .crypto-buy-banner:active {
 .search-input:focus { border-color: var(--accent); }
 .search-input::placeholder { color: var(--text-muted); opacity: 0.7; }
 
-/* --- Переключатель периодов --- */
-.period-switch {
+/* --- Переключатели периодов и индексов --- */
+.period-switch, .index-type-switch {
   display: flex;
   gap: 6px;
   margin-bottom: 12px;
   justify-content: center;
 }
 
-.period-btn {
+.period-btn, .index-type-btn {
   background: transparent;
   border: 1px solid var(--card-border);
   color: var(--text-color);
@@ -389,10 +389,16 @@ body.light-theme .crypto-buy-banner:active {
   transition: all 0.15s;
 }
 
-.period-btn.active {
+.period-btn.active, .index-type-btn.active {
   background: var(--accent);
   border-color: var(--accent);
   color: #ffffff;
+}
+
+.index-type-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 /* --- Списки --- */
