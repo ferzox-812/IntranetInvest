@@ -36,7 +36,7 @@
         </button>
         <button class="home-tile" data-target="index">
           <img src="chart.png" class="home-icon-img" alt="Индекс">
-          <span class="home-title">Индекс Мосбиржи</span>
+          <span class="home-title">Индексы</span>
         </button>
         <button class="home-tile" data-target="stocks">
           <img src="stocks.png" class="home-icon-img" alt="Акции">
@@ -199,10 +199,16 @@
       </footer>
     </section>
 
-    <!-- ИНДЕКС -->
+    <!-- ИНДЕКСЫ -->
     <section class="tab hidden" data-tab="index">
       <button class="back-btn" data-back="home">← Назад</button>
       <div class="card">
+        <!-- Переключатель индексов -->
+        <div class="index-type-switch">
+          <button class="index-type-btn active" data-type="imoex">IMOEX</button>
+          <button class="index-type-btn" data-type="sp500">S&P 500</button>
+        </div>
+
         <div class="period-switch" id="indexPeriods">
           <button class="period-btn" data-days="3">3Д</button>
           <button class="period-btn" data-days="30">1М</button>
