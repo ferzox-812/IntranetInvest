@@ -35,7 +35,11 @@ function toggleTheme() {
   localStorage.setItem('theme', isLight ? 'light' : 'dark');
   document.getElementById('themeIcon').textContent = isLight ? '☀️' : '🌙';
   
-  if (!document.querySelector('.tab[data-tab="index"]').classList.contains('hidden')) renderChart('index', 'IMOEX', { days: 365 });
+  if (!document.querySelector('.tab[data-tab="index"]').classList.contains('hidden')) {
+    const activeType = document.querySelector('.index-type-btn.active').dataset.type;
+    if (activeType === 'sp500') renderSP500({ days: 365 });
+    else renderChart('index', 'IMOEX', { days: 365 });
+  }
   if (!document.querySelector('.tab[data-tab="stocks"]').classList.contains('hidden')) renderStocksList();
   if (!document.querySelector('.tab[data-tab="dollar"]').classList.contains('hidden')) renderCurrencyList();
   if (!document.querySelector('.tab[data-tab="crypto"]').classList.contains('hidden')) renderCryptoList();
@@ -141,7 +145,7 @@ const SUBTITLES = {
   p2p: 'Приобрести криптовалюту',
   support: 'Поддержать проект',
   stocks: 'Акции',
-  index: 'Индекс Мосбиржи',
+  index: 'Индексы',
   dollar: 'Валюты',
   crypto: 'Криптовалюты',
 };
@@ -153,7 +157,12 @@ function switchTab(name) {
   document.querySelector(`.tab[data-tab="${name}"]`)?.classList.remove('hidden');
   document.getElementById('pageSubtitle').textContent = SUBTITLES[name] || '';
 
-  if (name === 'index' && !LOADED.index) { LOADED.index = true; renderChart('index', 'IMOEX', { days: 365 }); }
+  if (name === 'index' && !LOADED.index) { 
+    LOADED.index = true; 
+    const activeType = document.querySelector('.index-type-btn.active').dataset.type;
+    if (activeType === 'sp500') renderSP500({ days: 365 });
+    else renderChart('index', 'IMOEX', { days: 365 }); 
+  }
   if (name === 'stocks' && !LOADED.stocks) { LOADED.stocks = true; renderStocksList(); }
   if (name === 'dollar' && !LOADED.dollar) { LOADED.dollar = true; renderCurrencyList(); }
   if (name === 'crypto' && !LOADED.crypto) { LOADED.crypto = true; renderCryptoList(); }
@@ -162,6 +171,26 @@ function switchTab(name) {
 document.querySelectorAll('.home-tile').forEach(tile => tile.addEventListener('click', () => switchTab(tile.dataset.target)));
 document.querySelectorAll('.crypto-buy-banner').forEach(banner => banner.addEventListener('click', () => switchTab(banner.dataset.target)));
 document.querySelectorAll('.back-btn[data-back]').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.back)));
+
+// ============================================
+// Переключатель индексов (IMOEX / S&P 500)
+// ============================================
+document.querySelectorAll('.index-type-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.index-type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    
+    const type = btn.dataset.type;
+    const activePeriod = document.querySelector('#indexPeriods .period-btn.active');
+    const days = activePeriod ? parseInt(activePeriod.dataset.days) : 365;
+    
+    if (type === 'sp500') {
+      renderSP500({ days });
+    } else {
+      renderChart('index', 'IMOEX', { days });
+    }
+  });
+});
 
 // ============================================
 // Акции (Список)
@@ -322,7 +351,7 @@ function closeCryptoView() {
 document.getElementById('cryptoBack').addEventListener('click', closeCryptoView);
 
 // ============================================
-// Загрузка истории
+// Загрузка истории (MOEX)
 // ============================================
 async function loadHistory(target, secid, period) {
   const daysToFetch = period.days === 3 ? 7 : period.days;
@@ -353,30 +382,34 @@ async function loadHistory(target, secid, period) {
   return { labels, values };
 }
 
-async function loadCurrencyHistory(baseCurrency, period) {
-  const end = new Date(), start = new Date();
-  start.setDate(start.getDate() - period.days);
-  const fmt = (d) => d.toISOString().slice(0, 10);
-  const url = `https://api.frankfurter.dev/v2/rates?base=${baseCurrency}&quotes=RUB&from=${fmt(start)}&to=${fmt(end)}`;
-  const data = await fetchJSONViaProxy(url);
-  if (!Array.isArray(data)) throw new Error('Ошибка Frankfurter');
-  const sorted = data.slice().sort((a, b) => a.date.localeCompare(b.date));
-  return { labels: sorted.map(row => row.date), values: sorted.map(row => row.rate) };
-}
+// ============================================
+// Загрузка S&P 500 (через FRED)
+// ============================================
+async function loadSP500History(period) {
+  const days = period.days;
+  const data = await fetchJSONViaProxy('fred/sp500'); // Обращаемся к нашему Worker
 
-async function loadCryptoHistory(symbol, period) {
-  const pairMap = { 'bitcoin': 'XBTUSD', 'gram': 'TONUSD', 'ethereum': 'ETHUSD' };
-  const pair = pairMap[symbol] || symbol;
-  const is24h = period.hours === 24;
-  const interval = is24h ? 60 : 1440;
-  const limit = is24h ? 24 : period.days;
-  const url = `https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=${interval}`;
-  const data = await fetchJSONViaProxy(url);
-  if (!data.result) throw new Error('Ошибка Kraken');
-  const resultKey = Object.keys(data.result).find(k => k !== 'last');
-  if (!resultKey) throw new Error('Нет данных Kraken');
-  const candles = data.result[resultKey].slice(-limit);
-  return { labels: candles.map(c => { const d = new Date(c[0] * 1000); return is24h ? d.toISOString().slice(11, 16) : d.toISOString().slice(0, 10); }), values: candles.map(c => parseFloat(c[4])) };
+  if (!data || !data.labels || data.labels.length === 0) {
+    throw new Error('Нет данных S&P 500');
+  }
+
+  // Фильтруем по дате
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  
+  const filteredLabels = [];
+  const filteredValues = [];
+
+  for (let i = 0; i < data.labels.length; i++) {
+    const date = new Date(data.labels[i]);
+    if (date >= cutoff) {
+      filteredLabels.push(data.labels[i]);
+      filteredValues.push(data.values[i]);
+    }
+  }
+
+  if (filteredValues.length === 0) throw new Error('Нет данных за период');
+  return { labels: filteredLabels, values: filteredValues };
 }
 
 // ============================================
@@ -414,7 +447,7 @@ function drawSimpleChart(canvasEl, statusEl, data, label, instance) {
   
   const last = data.values[data.values.length - 1], first = data.values[0];
   const change = ((last - first) / first * 100).toFixed(2);
-  statusEl.textContent = `Текущее: ${last.toFixed(4)} • Изменение: ${change > 0 ? '+' : ''}${change}%`;
+  statusEl.textContent = `Текущее: ${last.toFixed(2)} • Изменение: ${change > 0 ? '+' : ''}${change}%`;
   return chart;
 }
 
@@ -426,6 +459,16 @@ async function renderChart(target, secid, period) {
     const data = await loadHistory(target, secid, period);
     if (target === 'index') window.__imoexChartInstance = drawSimpleChart(canvasEl, statusEl, data, secid, window.__imoexChartInstance);
     else stockChartInstance = drawSimpleChart(canvasEl, statusEl, data, secid, stockChartInstance);
+  } catch (e) { statusEl.textContent = 'Ошибка: ' + e.message; }
+}
+
+async function renderSP500(period) {
+  const statusEl = document.getElementById('chartStatus');
+  const canvasEl = document.getElementById('imoexChart');
+  statusEl.textContent = 'Загрузка S&P 500...';
+  try {
+    const data = await loadSP500History(period);
+    window.__imoexChartInstance = drawSimpleChart(canvasEl, statusEl, data, 'S&P 500', window.__imoexChartInstance);
   } catch (e) { statusEl.textContent = 'Ошибка: ' + e.message; }
 }
 
@@ -461,7 +504,10 @@ document.querySelectorAll('#indexPeriods .period-btn').forEach(btn => {
     const days = parseInt(btn.dataset.days);
     document.getElementById('indexHintBtn').classList.toggle('hidden', days !== 3);
     if (days !== 3) document.getElementById('indexHintText').classList.add('hidden');
-    renderChart('index', 'IMOEX', { days });
+    
+    const activeType = document.querySelector('.index-type-btn.active').dataset.type;
+    if (activeType === 'sp500') renderSP500({ days });
+    else renderChart('index', 'IMOEX', { days });
   });
 });
 
